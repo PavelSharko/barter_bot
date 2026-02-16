@@ -202,7 +202,7 @@ async def handler_comands_or_simple_msg(message: Message, bot):
 
 
     elif message.chat.id == config.MODERATOR_CONTACT_ID:
-        """проверка — сообщение от человека который управляет - модератор бота"""
+        """проверка — сообщение от человека который управляет - модератор бота - то есть ответ на любые текстовые команды с админ чата"""
         await some_method_msg_from_admin(message)
         return
 
