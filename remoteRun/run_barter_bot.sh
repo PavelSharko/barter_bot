@@ -29,20 +29,20 @@ else
     source "$VENV_DIR/bin/activate"
 fi
 
-# Проверка что bot.py существует
-if [ ! -f "$PROJECT_DIR/bot.py" ]; then
-    echo "❌ Ошибка: не найден bot.py в $PROJECT_DIR"
+# Проверка что barter_bot существует
+if [ ! -f "$PROJECT_DIR/barter_bot.py" ]; then
+    echo "❌ Ошибка: не найден barter_bot.py в $PROJECT_DIR"
     exit 1
 fi
 
 while true; do
-    echo "🔎 Проверка: убиваем все старые процессы bot.py..."
-    pkill -f "python3 bot.py" && echo "✅ Старые процессы убиты" || echo "ℹ️ Нет старых процессов"
+    echo "🔎 Проверка: убиваем все старые процессы barter_bot..."
+    pkill -f "python3 barter_bot.py" && echo "✅ Старые процессы убиты" || echo "ℹ️ Нет старых процессов"
 
     echo "🚀 Запуск бота с уровнем логирования $LOG_LEVEL и стендом $STEND..."
     cd "$PROJECT_DIR" || exit 1
 
-    python3 bot.py "$LOG_LEVEL" "$STEND"
+    python3 barter_bot.py "$LOG_LEVEL" "$STEND"
     EXIT_CODE=$?
     echo "⚠️ Бот завершился с кодом $EXIT_CODE - перезапуск через 5 секунд..."
     sleep 5

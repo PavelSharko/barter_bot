@@ -95,7 +95,7 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
 
 
 
-        elif is_chat(call.message, [config.ADMIN_CONTACT_ID]):
+        elif is_chat(call.message, [config.MODERATOR_CONTACT_ID]):
             """ТОЛЬКО ДЛЯ админов которые управляют ботом  от имени компании"""
             await handle_callback_from_admin_bot(call, state, bot)
 
@@ -161,22 +161,6 @@ async def handler_comands_or_simple_msg(message: Message, bot):
     user_id = message.from_user.id
     text = (message.text or "").casefold()  # нормализуем сразу
 
-    if message.chat.id == config.ADMIN_CHAT_GROUP:
-        """проверка — сообщение из админской группы?"""
-        await some_method_msg_from_group_admin(message)
-        return
-
-
-    elif message.chat.id == config.ADMIN_CONTACT_ID:
-        """проверка — сообщение от человека который управляет - администратор бота"""
-        await some_method_msg_from_admin(message)
-        return
-
-    elif message.chat.id == config.DEVELOPER_CHAT_ID:
-        """проверка — сообщение от девелопера"""
-        await some_method_msg_from_develop(message)
-        return
-
 
     """проверка — сообщение из любого чата"""
     # --- START ---
@@ -185,18 +169,19 @@ async def handler_comands_or_simple_msg(message: Message, bot):
         if user_id not in all_users:
             # Новый пользователь → регистрируем как "оплатил"
             await register_and_check_user(user_id, bot)
-            await message.answer_photo(
-                photo=START_PHOTO_ID,
-                caption=first_start_message,
+            await bot.send_message(
+                chat_id=user_id,
+                text=first_start_message,
                 reply_markup=get_persistent_main_menu()
             )
         else:
             # Уже есть в базе
-            await message.answer_photo(
-                photo=START_PHOTO_ID,
-                caption=first_start_message,
+            await bot.send_message(
+                chat_id=user_id,
+                text=first_start_message,
                 reply_markup=get_persistent_main_menu()
             )
+        return
 
     # --- MENU ---
     elif text == CommandsBot.MENU.value.lower():
@@ -207,6 +192,24 @@ async def handler_comands_or_simple_msg(message: Message, bot):
             reply_markup=get_inline_keyboard_menu_for_users()
         )
         add_message(global_msg_fast, user_id, msg)
+        return
+
+
+    if message.chat.id == config.ADMIN_CHAT_GROUP:
+        """проверка — сообщение из админской группы?"""
+        await some_method_msg_from_group_admin(message)
+        return
+
+
+    elif message.chat.id == config.MODERATOR_CONTACT_ID:
+        """проверка — сообщение от человека который управляет - модератор бота"""
+        await some_method_msg_from_admin(message)
+        return
+
+    elif message.chat.id == config.DEVELOPER_CHAT_ID:
+        """проверка — сообщение от девелопера"""
+        await some_method_msg_from_develop(message)
+        return
 
 
 
@@ -229,4 +232,4 @@ async def handler_comands_or_simple_msg(message: Message, bot):
 
     else:
         """ Свободный текст / голос """
-        await get_answer_to_simple_text_from_AI(message, text, user_id)
+        # await get_answer_to_simple_text_from_AI(message, text, user_id)
