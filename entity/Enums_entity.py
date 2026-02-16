@@ -2,8 +2,8 @@ from enum import Enum
 
 
 class UserLifecycleStatus(str, Enum):
-    CONTACTED = "contacted"
-    CANDIDATE = "candidate"
+    CONTACTED = "contacted" #это те кто зарегался но анкету еше не отправил на проверку 
+    CANDIDATE = "candidate" #это те кто  анкету  отправил на проверку 
     CLIENT = "client"
     REJECTED = "rejected"
     BLOCKED = "blocked"

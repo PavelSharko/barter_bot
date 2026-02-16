@@ -14,17 +14,23 @@ from initApp.config_loader import config
 from pictures.pictures_DB import START_PHOTO_ID
 from services.AIHelpUtils.prepearer_response_to_AI import get_answer_to_simple_text_from_AI
 from services.comands.developer_commands.standart_comands import save_actual_data
+from services.comands.users_commands.for_contacted.contacted_menu_inline_handler import \
+    handle_profile_registration_callbacks
+from services.comands.users_commands.for_contacted.to_set_profile_commands import extract_and_save_full_name_from_msg
 from services.comands.users_commands.sub_process1.extract_info_from_msg_procces1 import extract_text_info_from_msg
-from services.keyboards.bot_all_buttons import AdminChatButtons, CommandsBot, MainMenuButtons, SubprocessMenu
+from services.keyboards.bot_all_buttons import AdminChatButtons, CommandsBot, MainMenuButtons, SubprocessMenu, \
+    CONTACTED_Menu, ProfileRegistration_Menu
 from services.keyboards.creator_inline_keyboards import get_inline_keyboard_menu_for_users
-
-from services.keyboards.creator_persistent_keyboards import get_persistent_main_menu, get_cancel_keyboard
+from services.users_utils.all_users_manager import get_all_users
+from services.comands.users_commands.start_user import start_command_logic
+from services.comands.users_commands.for_contacted.contacted_menu_text_handler import handle_contacted_menu_text_commands
+from services.keyboards.creator_persistent_keyboards import get_cancel_keyboard, get_persistent_main_menu
 from services.msgs_utils.cheking_chat_info import is_chat
 from services.msgs_utils.deleter_messages import clear_messages
 from services.msgs_utils.prepared_massages import menu_msg, menu_msg_for_devs, first_start_message
 
 from services.send_msg_utils.utuls_send_msg import safe_send_message
-from services.state_bot.global_store import FSM, global_msg_fast, add_message
+from services.state_bot.global_store import FSM, global_msg_fast, add_message, global_msg_contacted_fast
 from services.users_utils.all_users_manager import register_and_check_user, get_all_users
 
 from handlers.fsm_utils import set_waiting_input
@@ -74,6 +80,12 @@ def register_handlers(dp, bot):
         elif current_command == MainMenuButtons.EX_BUTTON_FOR_INSERT_ANYTHING.name.lower():
             await extract_text_info_from_msg(message, state, user_id)
 
+            """для инфы анкеты"""
+        elif current_command == ProfileRegistration_Menu.ENTER_NAME.value.lower():
+            await extract_and_save_full_name_from_msg(message, state, user_id)
+
+
+
 
 
 
@@ -88,20 +100,21 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
         chat_id = call.message.chat.id
 
 
+
         if is_chat(call.message, [config.DEVELOPER_CHAT_ID]):
             """ТОЛЬКО ДЛЯ   ЧАТА разработчика"""
             if call.data == CommandsBot.STOP_BOT.value.lower():
                 await save_actual_data(bot, user_id)
+                return
 
 
-
-        elif is_chat(call.message, [config.MODERATOR_CONTACT_ID]):
+        if is_chat(call.message, [config.MODERATOR_CONTACT_ID]):
             """ТОЛЬКО ДЛЯ админов которые управляют ботом  от имени компании"""
             await handle_callback_from_admin_bot(call, state, bot)
 
 
 
-        elif call.data == CommandsBot.CLOSE.value.lower():
+        if call.data == CommandsBot.CLOSE.value.lower():
             """команды  для всех"""
             await call.answer("❌закрываю")
             await clear_messages(user_id, global_msg_fast)
@@ -116,6 +129,11 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
             add_message(global_msg_fast, user_id, msg)
             return
 
+        # Обработка кнопок регистрации профиля
+        elif call.data in [item.name.lower() for item in ProfileRegistration_Menu]:
+            await handle_profile_registration_callbacks(bot, call, user_id, state)
+
+
         elif call.data == MainMenuButtons.EX_BUTTON1.value.lower():
             """команды  для всех"""
             await call.answer("✅принято")
@@ -123,19 +141,14 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
             add_message(global_msg_fast, user_id, msg)
             return
 
-        elif call.data == MainMenuButtons.EX_BUTTON2.value.lower():
-            """команды  для всех"""
-            await call.answer("✅принято")
-            msg = await call.message.answer(f"Заглушка метод - ответ на кнопку {MainMenuButtons.EX_BUTTON2.value}")
-            add_message(global_msg_fast, user_id, msg)
-            return
 
 
 
 
 
 
-        elif call.data == AdminChatButtons.BUTTON_FOR_INSERT_ANYTHING.value.lower():
+
+        elif call.data == MainMenuButtons.EX_BUTTON_FOR_INSERT_ANYTHING.value.lower():
             """ТАК ВЫЗЫВАЮТСЯ КОМАНДЫ ПОСЛЕ КОТОРЫХ НАДО ОБРАБОТАТЬ ДАННЫЕ КОТОРЫЕ ОТПРАВИТ ПОЛЬЗОВАТЕЛЬ"""
             await set_waiting_input(
                 state, bot, chat_id, user_id,
@@ -165,22 +178,7 @@ async def handler_comands_or_simple_msg(message: Message, bot):
     """проверка — сообщение из любого чата"""
     # --- START ---
     if text == CommandsBot.START.value.lower():
-        all_users = get_all_users()
-        if user_id not in all_users:
-            # Новый пользователь → регистрируем как "оплатил"
-            await register_and_check_user(user_id, bot)
-            await bot.send_message(
-                chat_id=user_id,
-                text=first_start_message,
-                reply_markup=get_persistent_main_menu()
-            )
-        else:
-            # Уже есть в базе
-            await bot.send_message(
-                chat_id=user_id,
-                text=first_start_message,
-                reply_markup=get_persistent_main_menu()
-            )
+        await start_command_logic(message, bot)
         return
 
     # --- MENU ---
@@ -192,6 +190,12 @@ async def handler_comands_or_simple_msg(message: Message, bot):
             reply_markup=get_inline_keyboard_menu_for_users()
         )
         add_message(global_msg_fast, user_id, msg)
+        return
+
+    # --- CONTACTED MENU ---
+    # Проверяем, есть ли текст сообщения в списке значений кнопок CONTACTED_Menu
+    elif text in [c.value.lower() for c in CONTACTED_Menu]:
+        await handle_contacted_menu_text_commands(message, bot)
         return
 
 
@@ -212,7 +216,7 @@ async def handler_comands_or_simple_msg(message: Message, bot):
         return
 
 
-
+    # todo проверить условие ниже
     elif text in [c.value.lower() for c in CommandsBot] or text in [c.value for c in AdminChatButtons]\
             or text in [c.value for c in MainMenuButtons] or text in [c.value for c in SubprocessMenu]:
         """Другие команды если случайно текстовая команда бота прилетит которая не обрабатывается еще чтоб в ии не уходила"""

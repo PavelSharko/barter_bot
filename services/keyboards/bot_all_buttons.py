@@ -42,3 +42,19 @@ class SubprocessMenu(str, Enum):
     PRODUCT1 = "продукт1"
     PRODUCT2 = "продукт2"
     PRODUCT3 = "продукт3"
+
+class CONTACTED_Menu(str, Enum):
+    APPLY_REQUEST = "Подать заявку на вступление"
+    ACCEPT_RULES = "Принять правила клуба"
+    FILL_PROFILE = "Заполнить анкету участника"
+    OK_AGREE = "ок-согласен"
+
+class REJECTED_Menu(str, Enum):
+    VIEW_PROFILE = "Просмотр анкеты"
+    CLEAR_PROFILE = "Очистить анкету"
+
+class ProfileRegistration_Menu(str, Enum):
+    ENTER_NAME = "Ввести ФИО"
+    ENTER_AREA = "Указать район"
+    ENTER_PRODUCT = "Указать товар / услугу"
+    ENTER_PRICE = "Указать прайс"
