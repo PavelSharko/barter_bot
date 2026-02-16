@@ -26,24 +26,28 @@ class UserCategory(int, Enum):
     CAT_75 = 75
     CAT_100 = 100
 
-class UserProfile(str, Enum):
+class UserFields(str, Enum):
     NAME_TG = "name_tg"
     NAME_REAL = "name_real"
     DATE_REG = "date_reg"
     PHONE = "phone"
     UPDATED_AT = "updated_at"
-    RULES_READ = "rules_read"
-    IS_EXCLUDED = "is_excluded"
     REGION = "region"
-    BALANCE = "balance"
-    TOTAL_DEALS_COUNT = "total_deals_count"
-    RATING_SUM = "rating_sum"
-    RATING_AVG = "rating_avg"
     RULES_REMINDER_SENT_AT = "rules_reminder_sent_at"
     STATUS = "status"
     FORGOT_REVIEW_STATUS = "forgot_review_status"
     PROFILE_STATUS = "profile_status"
     CATEGORY = "category"
+
+class UserFlags(str, Enum):
+    RULES_READ = "rules_read"
+    IS_EXCLUDED = "is_excluded"
+
+class UserMetrics(str, Enum):
+    BALANCE = "balance"
+    TOTAL_DEALS_COUNT = "total_deals_count"
+    RATING_SUM = "rating_sum"
+    RATING_AVG = "rating_avg"
 
 class Sity(str, Enum):
     BALI = "Bali"

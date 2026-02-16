@@ -5,11 +5,12 @@ from datetime import datetime
 
 from filelock import FileLock
 
-from entity.Enums_entity import UserProfile
 from filesManagers.maker_dirs import ensure_file_exists
 from initApp.config_loader import config
 from entity.Enums_entity import (
-    UserProfile,
+    UserFields,
+    UserFlags,
+    UserMetrics,
     UserLifecycleStatus,
     ReviewStatus,
     ProfileStatus,
@@ -90,23 +91,23 @@ async def register_and_check_user(user_id: int, bot=None) -> bool:
             current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             users[user_id] = {
-                UserProfile.NAME_TG.value: user_name or f"ID{user_id}",
-                UserProfile.NAME_REAL.value: None,
-                UserProfile.DATE_REG.value: current_time,
-                UserProfile.PHONE.value: None,
-                UserProfile.UPDATED_AT.value: current_time,
-                UserProfile.RULES_READ.value: False,
-                UserProfile.IS_EXCLUDED.value: False,
-                UserProfile.REGION.value: Sity.BALI.value,
-                UserProfile.BALANCE.value: 0,
-                UserProfile.TOTAL_DEALS_COUNT.value: 0,
-                UserProfile.RATING_SUM.value: 0,
-                UserProfile.RATING_AVG.value: 0.0,
-                UserProfile.RULES_REMINDER_SENT_AT.value: None,
-                UserProfile.STATUS.value: UserLifecycleStatus.CONTACTED.value,
-                UserProfile.FORGOT_REVIEW_STATUS.value: ReviewStatus.NONE.value,
-                UserProfile.PROFILE_STATUS.value: ProfileStatus.EMPTY.value,
-                UserProfile.CATEGORY.value: None,  # null по умолчанию
+                UserFields.NAME_TG.value: user_name or f"ID{user_id}",
+                UserFields.NAME_REAL.value: None,
+                UserFields.DATE_REG.value: current_time,
+                UserFields.PHONE.value: None,
+                UserFields.UPDATED_AT.value: current_time,
+                UserFlags.RULES_READ.value: False,
+                UserFlags.IS_EXCLUDED.value: False,
+                UserFields.REGION.value: Sity.BALI.value,
+                UserMetrics.BALANCE.value: 0,
+                UserMetrics.TOTAL_DEALS_COUNT.value: 0,
+                UserMetrics.RATING_SUM.value: 0,
+                UserMetrics.RATING_AVG.value: 0.0,
+                UserFields.RULES_REMINDER_SENT_AT.value: None,
+                UserFields.STATUS.value: UserLifecycleStatus.CONTACTED.value,
+                UserFields.FORGOT_REVIEW_STATUS.value: ReviewStatus.NONE.value,
+                UserFields.PROFILE_STATUS.value: ProfileStatus.EMPTY.value,
+                UserFields.CATEGORY.value: None,  # null по умолчанию
             }
 
             # обновляем глобальный кеш
@@ -123,7 +124,7 @@ def get_user_name(user_id: int) -> str | None:
     """Возвращает сохранённое имя пользователя."""
     users = load_all_users()
     user = users.get(user_id)
-    return user.get(UserProfile.NAME_TG.value) if user else None
+    return user.get(UserFields.NAME_TG.value) if user else None
 
 
 def get_all_users() -> dict[int, dict]:
