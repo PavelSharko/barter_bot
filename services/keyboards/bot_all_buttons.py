@@ -56,5 +56,6 @@ class REJECTED_Menu(str, Enum):
 class ProfileRegistration_Menu(str, Enum):
     ENTER_NAME = "Ввести ФИО"
     ENTER_AREA = "Указать район"
-    ENTER_PRODUCT = "Указать товар / услугу"
+    ENTER_NAME_PRODUCT = "Указать товар / услугу"
+    ENTER_FULL_INFO_PRODUCT = "описать услугу"
     ENTER_PRICE = "Указать прайс"

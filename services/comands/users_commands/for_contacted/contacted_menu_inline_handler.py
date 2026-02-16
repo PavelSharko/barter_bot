@@ -37,7 +37,7 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
         # логика для ENTER_REGION
         return
 
-    if call.data == ProfileRegistration_Menu.ENTER_PRODUCT.name.lower():
+    if call.data == ProfileRegistration_Menu.ENTER_NAME_PRODUCT.name.lower():
         await call.answer(text="Указываем товар/услугу 🛒", show_alert=False)
         # логика для ENTER_PRODUCT
         return
