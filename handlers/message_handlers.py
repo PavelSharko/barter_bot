@@ -6,7 +6,7 @@ from aiogram import types, F
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 
-from handlers.sub_handlers.admin_group_handler import some_method_msg_from_modertor, handle_callback_from_admin_bot, \
+from handlers.sub_handlers.admin_group_handler import some_method_text_msg_from_modertor, handle_callback_from_admin_bot, \
     some_method_msg_from_admin_chat
 from handlers.sub_handlers.developer_chat_handler import some_method_msg_from_develop
 
@@ -32,7 +32,8 @@ from services.msgs_utils.deleter_messages import clear_messages
 from services.msgs_utils.prepared_massages import menu_msg, menu_msg_for_devs, first_start_message
 
 from services.send_msg_utils.utuls_send_msg import safe_send_message
-from services.state_bot.global_store import FSM, global_msg_fast, add_message, global_msg_contacted_fast
+from services.state_bot.global_store import FSM, global_msg_fast, add_message, global_msg_contacted_fast, \
+    global_msg_for_close
 from services.users_utils.all_users_manager import register_and_check_user, get_all_users
 
 from handlers.fsm_utils import set_waiting_input
@@ -138,7 +139,7 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
         if call.data == CommandsBot.CLOSE.value.lower():
             """команды  для всех"""
             await call.answer("❌закрываю")
-            await clear_messages(user_id, global_msg_fast)
+            await clear_messages(user_id, global_msg_fast, global_msg_for_close)
             return
 
         elif call.data == CommandsBot.MENU.value.lower():
@@ -228,7 +229,7 @@ async def handler_comands_or_simple_msg(message: Message, bot):
 
     elif message.chat.id == config.MODERATOR_CONTACT_ID:
         """проверка — сообщение от человека который управляет"""
-        await some_method_msg_from_modertor(message)
+        await some_method_text_msg_from_modertor(message)
         return
 
 
