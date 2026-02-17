@@ -6,8 +6,8 @@ from aiogram import types, F
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 
-from handlers.sub_handlers.admin_group_handler import some_method_msg_from_group_admin, \
-    some_method_msg_from_admin, handle_callback_from_admin_bot
+from handlers.sub_handlers.admin_group_handler import some_method_msg_from_modertor, handle_callback_from_admin_bot, \
+    some_method_msg_from_admin_chat
 from handlers.sub_handlers.developer_chat_handler import some_method_msg_from_develop
 
 from initApp.config_loader import config
@@ -16,7 +16,9 @@ from services.AIHelpUtils.prepearer_response_to_AI import get_answer_to_simple_t
 from services.comands.developer_commands.standart_comands import save_actual_data
 from services.comands.users_commands.for_contacted.contacted_menu_inline_handler import \
     handle_profile_registration_callbacks
-from services.comands.users_commands.for_contacted.to_set_profile_commands import extract_and_save_full_name_from_msg
+from services.comands.users_commands.for_contacted.to_set_profile_commands import extract_and_save_full_name_from_msg, \
+    extract_and_save_area, extract_and_save_product_name, extract_and_save_description, extract_and_save_price, \
+    extract_and_save_socials
 from services.comands.users_commands.sub_process1.extract_info_from_msg_procces1 import extract_text_info_from_msg
 from services.keyboards.bot_all_buttons import AdminChatButtons, CommandsBot, MainMenuButtons, SubprocessMenu, \
     CONTACTED_Menu, ProfileRegistration_Menu
@@ -71,7 +73,7 @@ def register_handlers(dp, bot):
         data = await state.get_data()
         current_command = data.get("current_command")
         user_id = message.from_user.id
-
+        
         """для админ чата"""
         if current_command == AdminChatButtons.BUTTON_FOR_INSERT_ANYTHING.name.lower():
             await extract_text_info_from_msg(message, state, user_id)
@@ -83,6 +85,25 @@ def register_handlers(dp, bot):
             """для инфы анкеты"""
         elif current_command == ProfileRegistration_Menu.ENTER_NAME.value.lower():
             await extract_and_save_full_name_from_msg(message, state, user_id)
+
+        elif current_command == ProfileRegistration_Menu.ENTER_AREA.value.lower():
+            await extract_and_save_area(message, state, user_id)
+
+        elif current_command == ProfileRegistration_Menu.ENTER_NAME_PRODUCT.value.lower():
+            await extract_and_save_product_name(message, state, user_id)
+
+        elif current_command == ProfileRegistration_Menu.ENTER_FULL_INFO_PRODUCT.value.lower():
+            await extract_and_save_description(message, state, user_id)
+
+        elif current_command == ProfileRegistration_Menu.ENTER_PRICE.value.lower():
+            await extract_and_save_price(message, state, user_id)
+
+        elif current_command == ProfileRegistration_Menu.ENTER_SOCIALS.value.lower():
+            await extract_and_save_socials(message, state, user_id)
+
+        elif current_command == ProfileRegistration_Menu.REJECT.name.lower():
+             from services.comands.admin_commands.moderator_actions import process_rejection_reason
+             await process_rejection_reason(message, state, bot)
 
 
 
@@ -201,14 +222,15 @@ async def handler_comands_or_simple_msg(message: Message, bot):
 
     if message.chat.id == config.ADMIN_CHAT_GROUP:
         """проверка — сообщение из админской группы?"""
-        await some_method_msg_from_group_admin(message)
+        await some_method_msg_from_admin_chat(message)
         return
 
 
     elif message.chat.id == config.MODERATOR_CONTACT_ID:
-        """проверка — сообщение от человека который управляет - модератор бота - то есть ответ на любые текстовые команды с админ чата"""
-        await some_method_msg_from_admin(message)
+        """проверка — сообщение от человека который управляет"""
+        await some_method_msg_from_modertor(message)
         return
+
 
     elif message.chat.id == config.DEVELOPER_CHAT_ID:
         """проверка — сообщение от девелопера"""

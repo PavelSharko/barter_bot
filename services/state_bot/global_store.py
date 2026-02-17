@@ -27,10 +27,12 @@ class FSM(StatesGroup):
 # глобальный список сообщений
 global_msg_fast: dict[int, list[types.Message]] = {}
 global_msg_contacted_fast: dict[int, list[types.Message]] = {}
-global_msg_after_step: dict[int, list[types.Message]] = {}
-global_msg_long: dict[int, list[types.Message]] = {}
-global_msg_after_order: dict[int, list[types.Message]] = {}
-global_msg_delete_after_confirm_order: dict[int, list[types.Message]] = {}
+global_msg_for_close: dict[int, list[types.Message]] = {}
+
+# global_msg_after_step: dict[int, list[types.Message]] = {}
+# global_msg_long: dict[int, list[types.Message]] = {}
+# global_msg_after_order: dict[int, list[types.Message]] = {}
+# global_msg_delete_after_confirm_order: dict[int, list[types.Message]] = {}
 
 
 

@@ -38,6 +38,7 @@ class UserFields(str, Enum):
     FORGOT_REVIEW_STATUS = "forgot_review_status"
     PROFILE_STATUS = "profile_status"
     CATEGORY = "category"
+    BLOCK_REASON = "block_reason"
 
 class UserFlags(str, Enum):
     RULES_READ = "rules_read"
@@ -54,3 +55,15 @@ class Sity(str, Enum):
     DUBAI = "Dubai"
     RUSSIA = "Russia"
     THAILAND = "Thailand"
+
+class UserProfileFields(str, Enum):
+    NAME = "name"
+    AREA = "area"
+    SERVICE_NAME = "service_name"
+    SERVICE_DESCRIPTION = "service_description"
+    PRICE_INFO = "price_info"
+    SOCIAL_LINKS = "social_links"
+    CURRENT_STEP = "current_step"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+    VERSION = "version"

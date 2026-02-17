@@ -9,7 +9,7 @@ from services.keyboards.creator_persistent_keyboards import get_persistent_main_
 from services.keyboards.bot_all_buttons import CommandsBot
 from services.msgs_utils.deleter_messages import clear_messages
 from services.send_msg_utils.utuls_send_msg import safe_send_message
-from services.state_bot.global_store import add_message, global_msg_fast, FSM, global_msg_after_step
+from services.state_bot.global_store import add_message, global_msg_fast, FSM
 
 """
 Утилиты для работы с конечным автоматом состояний (FSM) в Telegram-боте на aiogram.
@@ -39,11 +39,6 @@ async def check_cancel_input(text: str, message: types.Message, state: FSMContex
         add_message(global_msg_fast, message.from_user.id, message)
         msg = await message.reply(
             "🚫 Операция отменена."
-        )
-        await message.reply(
-            "🤖",
-            quote=True,
-            reply_markup=get_persistent_main_menu()
         )
         add_message(global_msg_fast, user_id, msg)
         await clear_waiting_input(state, chat_id, user_id)
@@ -107,13 +102,13 @@ async def add_words_timeout(chat_id: int, user_id: int, state: FSMContext, bot, 
 
                 )
 
-                await safe_send_message(
-                    bot,
-                    chat_id=chat_id,
-                    text="🍰",
-                    reply_markup=get_persistent_main_menu()
-                )
-                add_message(global_msg_after_step, user_id, msg_cancel)
+                # await safe_send_message(
+                #     bot,
+                #     chat_id=chat_id,
+                #     text="🍰",
+                #     reply_markup=get_persistent_main_menu()
+                # )
+                # add_message(global_msg_fast, user_id, msg_cancel)
 
 
             except Exception:

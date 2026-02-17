@@ -80,6 +80,18 @@ async def handle_contacted_menu_text_commands(message: Message, bot: Bot):
         add_message(global_msg_contacted_fast, user_id, message)
         await clear_messages(user_id, global_msg_contacted_fast)
 
+        from services.users_utils.user_profile_manager import is_profile_completed
+        from services.keyboards.keyboards_for_registration import get_final_profile_keyboard
+
+        if is_profile_completed(user_id):
+             msg = await bot.send_message(
+                chat_id=user_id,
+                text="✅ Ваша анкета уже готова!",
+                reply_markup=get_final_profile_keyboard()
+            )
+             add_message(global_msg_contacted_fast, user_id, msg)
+             return
+
         users = load_all_users()
         user_data = users.get(user_id, {})
         rules_read = user_data.get(UserFlags.RULES_READ.value, False)

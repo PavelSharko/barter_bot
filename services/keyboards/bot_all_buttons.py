@@ -20,6 +20,11 @@ class AdminChatButtons(str, Enum):
     BUTTON2 = "просто_кнопка2"
     BUTTON_FOR_INSERT_ANYTHING = "вставить_текст_фото"
 
+class ModeratorChatButtons(str, Enum):
+        MENU = "меню модератора"
+
+
+
 # --- Команды бота общие ---
 class CommandsBot(str, Enum):
     CANCEL = "отмена 🛑"
@@ -59,3 +64,16 @@ class ProfileRegistration_Menu(str, Enum):
     ENTER_NAME_PRODUCT = "Указать товар / услугу"
     ENTER_FULL_INFO_PRODUCT = "описать услугу"
     ENTER_PRICE = "Указать прайс"
+    ENTER_SOCIALS = "Указать ссылки и отзывы"
+    FINAL_PROFILE_VIEW = "Посмотреть анкету"
+    RESTART_PROFILE = "заполнить заново" # Для просмотра готовой анкеты
+    SEND_TO_REVIEW = "Отправить на проверку"
+    ACCEPT = "принять"
+    REJECT = "отклонить"
+
+class CategoryButtons(str, Enum):
+    CAT_0 = "category_0"
+    CAT_25 = "category_25"
+    CAT_50 = "category_50"
+    CAT_75 = "category_75"
+    CAT_100 = "category_100"

@@ -1,18 +1,18 @@
 from handlers.fsm_utils import set_waiting_input
 from initApp.config_loader import config
-from services.keyboards.bot_all_buttons import AdminChatButtons
+from services.keyboards.bot_all_buttons import AdminChatButtons, ProfileRegistration_Menu
 from services.keyboards.creator_inline_keyboards import get_menu_keyboard_for_admin_chat
 from services.keyboards.creator_persistent_keyboards import get_persistent_main_menu, get_cancel_keyboard
 from services.msgs_utils.deleter_messages import clear_messages
 from services.state_bot.global_store import global_msg_fast, add_message
 
 
-async def some_method_msg_from_group_admin(message):
+async def some_method_msg_from_admin_chat(message):
     # todo
-    await message.answer("Заглушка метод - если прилетает в чат админа текстовое сообщение")
+    await message.answer("Заглушка метод - если прилетает в группу организаторов бота  текстовое сообщение")
     return
 
-async def some_method_msg_from_admin(message):
+async def some_method_msg_from_modertor(message):
     """
     Обрабатывает входящее сообщение от администратора.
 
@@ -23,11 +23,7 @@ async def some_method_msg_from_admin(message):
     """
     user_id = message.from_user.id
     await clear_messages(user_id, global_msg_fast)
-    # отправляем reply кнопку для админа
-    await message.answer(
-        text=f"🤖 ",
-        reply_markup=get_persistent_main_menu()
-    )
+
     # отправляем inline клавиатуру  для админа
     msg  = await message.answer(
         text=f"меню управления для администратора",
@@ -81,6 +77,19 @@ async def handle_callback_from_admin_bot(call, state, bot):
         )
         add_message(global_msg_fast, user_id, msg)
         # далее надо вызвать метод в блоке где ловятся waiting_inputs который что-то сделает с этой инфой
+        return
+
+    # Обработка действий модератора (Принять/Отклонить)
+    if call.data.startswith(f"{ProfileRegistration_Menu.ACCEPT.name.lower()}_") or \
+       call.data.startswith(f"{ProfileRegistration_Menu.REJECT.name.lower()}_"):
+        from services.comands.admin_commands.moderator_actions import handle_moderator_action
+        await handle_moderator_action(call, bot, state)
+        return
+
+    # Обработка выбора категории
+    if call.data.startswith("category_"):
+        from services.comands.admin_commands.moderator_actions import handle_category_selection
+        await handle_category_selection(call, bot)
         return
 
 
