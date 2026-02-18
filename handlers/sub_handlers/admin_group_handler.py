@@ -70,7 +70,7 @@ async def handle_callback_from_admin_bot(call, state, bot):
     # Обработка действий модератора из меню
     if call.data == ModeratorChatButtons.VIEW_NEW_APPLICATIONS.name.lower():
         msg = await call.message.answer(
-            text="вот @ссылка на папку  в гугл диске  базой всех клиентов»\n\nhttps://drive.google.com/drive/folders/1Un16Y5wQy-RWupl0t5n--XZ9KSG80iLu?usp=sharing",
+            text=f"вот @ссылка на папку  в гугл диске  базой всех клиентов»\n\n{config.LINK_GOOGLE_FOLDER}",
             reply_markup=get_inline_keyboard_close()
         )
         add_message(global_msg_for_close, user_id, msg)
