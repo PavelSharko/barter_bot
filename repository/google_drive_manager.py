@@ -256,7 +256,7 @@ async def download_db_folder(local_folder=config.DB_STORGE, drive_folder_name=co
 
 
 async def periodic_upload(delay=config.TIME_TO_COPY_REPLICA_DB_MIN*60):
-    prepeared_timeout = 60
+    prepeared_timeout = config.TIME_TO_COPY_REPLICA_DB_MIN
     logging.debug(f"⏳ {BLUE}запуск процесса копирования всех данных на гугл диск - \n\n первая копия череез {prepeared_timeout} минут перед загрузкой бэкапа...{RESET}")
     await asyncio.sleep(prepeared_timeout * 60)
 
