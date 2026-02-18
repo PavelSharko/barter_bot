@@ -18,9 +18,11 @@ async def start_command_logic(message: Message, bot: Bot):
     """
     user_id = message.from_user.id
 
+    all_users = get_all_users()
     # Проверка на модератора
     if user_id == config.MODERATOR_CONTACT_ID:
-        await register_and_check_user(user_id, bot)
+        if user_id not in all_users:
+            await register_and_check_user(user_id, bot)
         msg = await bot.send_message(
             chat_id=user_id,
             text="Вы являетесь модератором бота 👨‍⚖️",
@@ -30,7 +32,6 @@ async def start_command_logic(message: Message, bot: Bot):
         add_message(storage=global_msg_fast, user_id=user_id, msg=msg)
         return
 
-    all_users = get_all_users()
 
     # 1. Новый пользователь
     if user_id not in all_users:

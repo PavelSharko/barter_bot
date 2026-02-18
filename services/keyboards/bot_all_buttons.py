@@ -48,6 +48,19 @@ class MainMenuButtons(str, Enum):
     SUPPORT = "Поддержка 🆘"
     CLOSE = "Закрыть ❌"
 
+# --- Команды редактирования профиля ---
+class EditProfileButtons(str, Enum):
+    EDIT_NAME = "ИМЯ"
+    EDIT_AREA = "район"
+    EDIT_NAME_PRODUCT = "название услуги"
+    EDIT_FULL_INFO_PRODUCT = "описание услуги"
+    EDIT_PRICE = "прайс"
+    SAVE_CHANGES = "сохранить изменения"
+    ACCEPT_CHANGES = "принять изменения"
+    REJECT_CHANGES = "отклонить изменения"
+    EDIT_PROFILE_MENU = "Редактировать профиль ✏️"
+
+
 
 
 # --- Команды для отдельно выделенного процесса ---

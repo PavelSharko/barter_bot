@@ -67,7 +67,7 @@ async def add_words_timeout(chat_id: int, user_id: int, state: FSMContext, bot, 
         last_progress = None
 
         update_step = max(1, timeout // 18)
-
+        add_message(global_msg_fast, user_id, msg_progress) #gkdfmgkgdfm
         for i in range(timeout, 0, -update_step):
             current_state = await state.get_state()
             if current_state != FSM.waiting_input.state:

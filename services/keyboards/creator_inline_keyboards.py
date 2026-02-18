@@ -2,7 +2,7 @@ from enum import Enum
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from services.keyboards.bot_all_buttons import CommandsBot, MainMenuButtons, AdminChatButtons, ModeratorChatButtons
+from services.keyboards.bot_all_buttons import CommandsBot, MainMenuButtons, AdminChatButtons, ModeratorChatButtons, EditProfileButtons
 
 
 def get_moderator_menu_keyboard() -> InlineKeyboardMarkup:
@@ -50,6 +50,14 @@ def get_menu_keyboard_for_developer() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text=CommandsBot.STOP_BOT.value.lower(), callback_data=CommandsBot.STOP_BOT.value.lower())]
     ],
     )
+
+
+def get_profile_view_keyboard() -> InlineKeyboardMarkup:
+    """Создаёт кнопку для просмотра профиля (Редактировать + Закрыть)."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=EditProfileButtons.EDIT_PROFILE_MENU.value, callback_data=EditProfileButtons.EDIT_PROFILE_MENU.name.lower())],
+        [InlineKeyboardButton(text=CommandsBot.CLOSE.value, callback_data=CommandsBot.CLOSE.value.lower())]
+    ])
 
 
 
