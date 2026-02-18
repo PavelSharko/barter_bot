@@ -13,8 +13,6 @@ from handlers.sub_handlers.main_menu_handler import handle_callback_main_menu_fo
 from handlers.sub_handlers.edit_profile_handler import handle_edit_profile_callbacks
 
 from initApp.config_loader import config
-from pictures.pictures_DB import START_PHOTO_ID
-from services.AIHelpUtils.prepearer_response_to_AI import get_answer_to_simple_text_from_AI
 from services.comands.developer_commands.standart_comands import save_actual_data
 from services.comands.users_commands.for_contacted.contacted_menu_inline_handler import \
     handle_profile_registration_callbacks
