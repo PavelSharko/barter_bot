@@ -29,7 +29,7 @@ else
     source "$VENV_DIR/bin/activate"
 fi
 
-# Проверка что barter_bot существует
+# Проверка что barter_bot существуетв
 if [ ! -f "$PROJECT_DIR/barter_bot.py" ]; then
     echo "❌ Ошибка: не найден barter_bot.py в $PROJECT_DIR"
     exit 1
