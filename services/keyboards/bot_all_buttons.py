@@ -21,7 +21,9 @@ class AdminChatButtons(str, Enum):
     BUTTON_FOR_INSERT_ANYTHING = "вставить_текст_фото"
 
 class ModeratorChatButtons(str, Enum):
-        MENU = "меню модератора"
+    MENU = "меню модератора"
+    VIEW_NEW_APPLICATIONS = "Просмотреть новые заявки"
+    EXCLUDE_PARTICIPANT = "Исключить участника"
 
 
 
@@ -32,7 +34,6 @@ class CommandsBot(str, Enum):
     STOP_BOT = "❌ остановка бота"
     START = "/start"
     MENU = "МЕНЮ БОТА"
-    EXAMPLE_DYNAMIC_BUTTON = "динамическая кнопка"
 
 # --- Команды главного меню ---
 class MainMenuButtons(str, Enum):

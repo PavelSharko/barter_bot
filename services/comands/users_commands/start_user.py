@@ -3,12 +3,13 @@ from aiogram.types import Message
 
 from entity.Enums_entity import UserFields, UserLifecycleStatus
 from initApp.config_loader import config
-from services.keyboards.creator_persistent_keyboards import get_persistent_main_menu
+from services.keyboards.bot_all_buttons import ModeratorChatButtons
+from services.keyboards.creator_persistent_keyboards import get_persistent_main_menu, get_persistent_moderator_menu
 from services.keyboards.keyboards_for_CONTACTED import get_contacted_keyboard
 from services.keyboards.keyboards_for_registration import get_rejected_keyboard
 from services.msgs_utils.prepared_massages import first_start_message
 from services.users_utils.all_users_manager import get_all_users, register_and_check_user
-from services.state_bot.global_store import add_message, global_msg_contacted_fast
+from services.state_bot.global_store import add_message, global_msg_contacted_fast, global_msg_fast
 
 
 async def start_command_logic(message: Message, bot: Bot):
@@ -16,6 +17,19 @@ async def start_command_logic(message: Message, bot: Bot):
     Логика обработки команды /start.
     """
     user_id = message.from_user.id
+
+    # Проверка на модератора
+    if user_id == config.MODERATOR_CONTACT_ID:
+        await register_and_check_user(user_id, bot)
+        msg = await bot.send_message(
+            chat_id=user_id,
+            text="Вы являетесь модератором бота 👨‍⚖️",
+            reply_markup=get_persistent_moderator_menu()
+        )
+        # Можно добавить в глобальный стор, если нужно, но пока просто отправляем
+        add_message(storage=global_msg_fast, user_id=user_id, msg=msg)
+        return
+
     all_users = get_all_users()
 
     # 1. Новый пользователь

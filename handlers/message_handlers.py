@@ -6,8 +6,8 @@ from aiogram import types, F
 from aiogram.filters import StateFilter
 from aiogram.fsm.context import FSMContext
 
-from handlers.sub_handlers.admin_group_handler import some_method_text_msg_from_modertor, handle_callback_from_admin_bot, \
-    some_method_msg_from_admin_chat
+from handlers.sub_handlers.admin_group_handler import handle_callback_from_admin_bot, some_method_msg_from_admin_chat, \
+    some_method_text_msg_from_modertor
 from handlers.sub_handlers.developer_chat_handler import some_method_msg_from_develop
 
 from initApp.config_loader import config
@@ -21,7 +21,7 @@ from services.comands.users_commands.for_contacted.to_set_profile_commands impor
     extract_and_save_socials
 from services.comands.users_commands.sub_process1.extract_info_from_msg_procces1 import extract_text_info_from_msg
 from services.keyboards.bot_all_buttons import AdminChatButtons, CommandsBot, MainMenuButtons, SubprocessMenu, \
-    CONTACTED_Menu, ProfileRegistration_Menu
+    CONTACTED_Menu, ProfileRegistration_Menu, ModeratorChatButtons
 from services.keyboards.creator_inline_keyboards import get_inline_keyboard_menu_for_users
 from services.users_utils.all_users_manager import get_all_users
 from services.comands.users_commands.start_user import start_command_logic
@@ -106,6 +106,10 @@ def register_handlers(dp, bot):
              from services.comands.admin_commands.moderator_actions import process_rejection_reason
              await process_rejection_reason(message, state, bot)
 
+        elif current_command == ModeratorChatButtons.EXCLUDE_PARTICIPANT.name.lower():
+            from services.comands.admin_commands.exclude_participant import process_exclude_participant_input
+            await process_exclude_participant_input(message, state, bot)
+
 
 
 
@@ -122,6 +126,11 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
         chat_id = call.message.chat.id
 
 
+        if call.data == CommandsBot.CLOSE.value.lower():
+            """команды  для всех"""
+            await call.answer("❌закрываю")
+            await clear_messages(user_id, global_msg_fast, global_msg_for_close)
+            return
 
         if is_chat(call.message, [config.DEVELOPER_CHAT_ID]):
             """ТОЛЬКО ДЛЯ   ЧАТА разработчика"""
@@ -134,13 +143,7 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
             """ТОЛЬКО ДЛЯ админов которые управляют ботом  от имени компании"""
             await handle_callback_from_admin_bot(call, state, bot)
 
-
-
-        if call.data == CommandsBot.CLOSE.value.lower():
-            """команды  для всех"""
-            await call.answer("❌закрываю")
-            await clear_messages(user_id, global_msg_fast, global_msg_for_close)
-            return
+      
 
         elif call.data == CommandsBot.MENU.value.lower():
             await clear_messages(user_id, global_msg_fast)
@@ -155,13 +158,6 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
         elif call.data in [item.name.lower() for item in ProfileRegistration_Menu]:
             await handle_profile_registration_callbacks(bot, call, user_id, state)
 
-
-        elif call.data == MainMenuButtons.EX_BUTTON1.value.lower():
-            """команды  для всех"""
-            await call.answer("✅принято")
-            msg = await call.message.answer(f"Заглушка метод - ответ на кнопку {MainMenuButtons.EX_BUTTON1.value}")
-            add_message(global_msg_fast, user_id, msg)
-            return
 
 
 
@@ -228,10 +224,9 @@ async def handler_comands_or_simple_msg(message: Message, bot):
 
 
     elif message.chat.id == config.MODERATOR_CONTACT_ID:
-        """проверка — сообщение от человека который управляет"""
+        """проверка — сообщение от человека который управляет - модератор бота - то есть ответ на любые текстовые команды с админ чата"""
         await some_method_text_msg_from_modertor(message)
         return
-
 
     elif message.chat.id == config.DEVELOPER_CHAT_ID:
         """проверка — сообщение от девелопера"""

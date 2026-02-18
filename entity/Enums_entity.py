@@ -38,7 +38,17 @@ class UserFields(str, Enum):
     FORGOT_REVIEW_STATUS = "forgot_review_status"
     PROFILE_STATUS = "profile_status"
     CATEGORY = "category"
-    BLOCK_REASON = "block_reason"
+    BLOCK_PROFILE_INFO_REASON = "block_anketa_reason"
+    REASON_FOR_BLOCKING_USER = "user_block_reason"
+
+class BlockingStatusFields(str, Enum):
+    BLOCK_ID = "block_id"
+    USER_ID = "user_id"
+    MODERATOR_ID = "moderator_id"
+    REASON = "reason"
+    CREATED_AT = "created_at"
+    STATUS_BEFORE = "status_before"
+    STATUS_AFTER = "status_after"
 
 class UserFlags(str, Enum):
     RULES_READ = "rules_read"

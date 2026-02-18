@@ -142,7 +142,7 @@ async def process_rejection_reason(message: Message, state: FSMContext, bot: Bot
 
     # 1. Обновляем статус
     users[target_user_id][UserFields.STATUS.value] = UserLifecycleStatus.REJECTED.value
-    users[target_user_id][UserFields.BLOCK_REASON.value] = reason
+    users[target_user_id][UserFields.BLOCK_PROFILE_INFO_REASON.value] = reason
     save_all_users()
     
     rejection_targets.pop(message.from_user.id, None)

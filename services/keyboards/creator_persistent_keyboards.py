@@ -1,6 +1,6 @@
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton, InlineKeyboardButton
 
-from services.keyboards.bot_all_buttons import CommandsBot
+from services.keyboards.bot_all_buttons import CommandsBot, ModeratorChatButtons
 
 """
 ТУТ СОЗДАЮТСЯ REPLY ТЕКСТОВЫЕ КНОПКИ.
@@ -31,6 +31,18 @@ def get_cancel_keyboard() -> ReplyKeyboardMarkup:
     """
     keyboard = ReplyKeyboardMarkup(
         keyboard=[[KeyboardButton(text=CommandsBot.CANCEL.value)]],
+        resize_keyboard=True,
+        one_time_keyboard=False
+    )
+    return keyboard
+
+
+def get_persistent_moderator_menu() -> ReplyKeyboardMarkup:
+    """
+    Создаёт клавиатуру с одной кнопкой меню модератора.
+    """
+    keyboard = ReplyKeyboardMarkup(
+        keyboard=[[KeyboardButton(text=ModeratorChatButtons.MENU.value)]],
         resize_keyboard=True,
         one_time_keyboard=False
     )

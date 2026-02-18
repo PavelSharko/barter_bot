@@ -5,7 +5,7 @@ from entity.Enums_entity import UserFlags
 from services.keyboards.bot_all_buttons import CONTACTED_Menu
 from services.keyboards.keyboards_for_CONTACTED import get_agree_keyboard, get_contacted_keyboard, get_anketa_keyboard
 from services.users_utils.all_users_manager import load_all_users, save_all_users
-from services.state_bot.global_store import add_message, global_msg_contacted_fast
+from services.state_bot.global_store import add_message, global_msg_contacted_fast, global_msg_fast
 from services.msgs_utils.deleter_messages import clear_messages
 from services.keyboards.keyboards_for_registration import get_accept_rules_keyboard, get_full_name_keyboard
 
@@ -78,7 +78,7 @@ async def handle_contacted_menu_text_commands(message: Message, bot: Bot):
     # 3. Заполнить анкету участника
     elif text == CONTACTED_Menu.FILL_PROFILE.value.casefold():
         add_message(global_msg_contacted_fast, user_id, message)
-        await clear_messages(user_id, global_msg_contacted_fast)
+        await clear_messages(user_id, global_msg_contacted_fast, global_msg_fast)
 
         from services.users_utils.user_profile_manager import is_profile_completed
         from services.keyboards.keyboards_for_registration import get_final_profile_keyboard

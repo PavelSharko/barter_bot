@@ -7,35 +7,11 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from services.keyboards.bot_all_buttons import CommandsBot
 
 
-def get_inline_keyboard_for_ignore_user(author_text: str) -> InlineKeyboardMarkup:
-    """
-    Создаёт inline-клавиатуру с одной кнопкой SPECIAL_BUTTON,
-    у которой в callback_data добавляется динамический параметр author_text.
-
-    Используется для обработки специальных единичных команд,
-    которые одинаковы по логике, но уникальны по контексту (например, для разных пользователей или заказов).
-
-    Аргументы:
-        author_text (str): дополнительный текст, добавляемый к callback_data кнопки,
-                           чтобы различать вызовы одного типа кнопки.
-    """
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text=CommandsBot.EXAMPLE_DYNAMIC_BUTTON.value.lower(),
-                    callback_data=f"{CommandsBot.EXAMPLE_DYNAMIC_BUTTON.value.lower()}:{author_text}"
-                )
-            ]
-        ]
-    )
-
-
 
 
 def create_inline_keyboard_from_enum(enum_items: List[Enum], buttons_per_row: int = 2) -> InlineKeyboardMarkup:
     """
-    todo
+    todo убрать это
     Универсальный метод для создания inline клавиатуры из списка элементов Enum.
 
     Аргументы:
