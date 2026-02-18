@@ -1,3 +1,5 @@
+from __future__ import annotations
+from typing import Union
 from aiogram import Bot
 from aiogram.types import Message, CallbackQuery
 
@@ -6,7 +8,7 @@ from initApp.config_loader import config
 from services.users_utils.all_users_manager import load_all_users
 from services.state_bot.global_store import add_message, global_msg_fast
 
-async def check_blocked_user(user_id: int, bot: Bot, event: Message | CallbackQuery) -> bool:
+async def check_blocked_user(user_id: int, bot: Bot, event: Union[Message, CallbackQuery]) -> bool:
     """
     Проверяет, заблокирован ли пользователь.
     Если заблокирован:

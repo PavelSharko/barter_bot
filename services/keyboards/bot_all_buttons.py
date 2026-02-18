@@ -39,9 +39,14 @@ class CommandsBot(str, Enum):
 
 # --- Команды главного меню ---
 class MainMenuButtons(str, Enum):
-    EX_BUTTON1 = "просто_кнопка1"
-    EX_BUTTON2 = "просто_кнопка2"
-    EX_BUTTON_FOR_INSERT_ANYTHING = "вставить_текст_фото"
+    VIEW_PROFILE = "Посмотреть свой профиль 👤"
+    VIEW_MY_BALANCE = "Мой баланс 💰"
+    VIEW_OTHERS_BALANCE = "Баланс других 👥"
+    VIEW_DEALS_HISTORY = "История сделок 📜"
+    FIND_SERVICE = "Найти услугу/товар 🔍"
+    CONFIRM_DEAL = "Подтвердить сделку ✅"
+    SUPPORT = "Поддержка 🆘"
+    CLOSE = "Закрыть ❌"
 
 
 

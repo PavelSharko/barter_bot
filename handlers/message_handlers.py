@@ -9,6 +9,7 @@ from aiogram.fsm.context import FSMContext
 from handlers.sub_handlers.admin_group_handler import handle_callback_from_admin_bot, some_method_msg_from_admin_chat, \
     some_method_text_msg_from_modertor
 from handlers.sub_handlers.developer_chat_handler import some_method_msg_from_develop
+from handlers.sub_handlers.main_menu_handler import handle_callback_main_menu_for_users
 
 from initApp.config_loader import config
 from pictures.pictures_DB import START_PHOTO_ID
@@ -169,6 +170,11 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
         #     add_message(global_msg_fast, user_id, msg)
         #     return
 
+        # Обработка кнопок из MainMenuButtons
+        elif call.data in [item.name.lower() for item in MainMenuButtons]:
+            await handle_callback_main_menu_for_users(call, bot, state)
+            return
+
         # Обработка кнопок регистрации профиля
         elif call.data in [item.name.lower() for item in ProfileRegistration_Menu]:
             await handle_profile_registration_callbacks(bot, call, user_id, state)
@@ -205,7 +211,7 @@ async def handler_comands_or_simple_msg(message: Message, bot):
             menu_msg,
             reply_markup=get_inline_keyboard_menu_for_users()
         )
-        add_message(global_msg_fast, user_id, msg)
+        add_message(global_msg_for_close, user_id, msg)
         return
 
     # --- CONTACTED MENU ---

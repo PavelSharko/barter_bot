@@ -23,17 +23,20 @@ def get_inline_keyboard_menu_for_users() -> InlineKeyboardMarkup:
     keyboard = InlineKeyboardMarkup(
         inline_keyboard=[
             [
-                InlineKeyboardButton(
-                    text=MainMenuButtons.EX_BUTTON1.value.lower(),
-                    callback_data=MainMenuButtons.EX_BUTTON1.value.lower()),
-                InlineKeyboardButton(
-                    text=MainMenuButtons.EX_BUTTON2.value.lower(),
-                    callback_data=MainMenuButtons.EX_BUTTON2.value.lower())
+                InlineKeyboardButton(text=MainMenuButtons.VIEW_PROFILE.value, callback_data=MainMenuButtons.VIEW_PROFILE.name.lower()),
+                InlineKeyboardButton(text=MainMenuButtons.VIEW_MY_BALANCE.value, callback_data=MainMenuButtons.VIEW_MY_BALANCE.name.lower())
             ],
             [
-                InlineKeyboardButton(
-                    text=MainMenuButtons.EX_BUTTON_FOR_INSERT_ANYTHING.value.lower(),
-                    callback_data=MainMenuButtons.EX_BUTTON_FOR_INSERT_ANYTHING.value.lower())
+                InlineKeyboardButton(text=MainMenuButtons.VIEW_OTHERS_BALANCE.value, callback_data=MainMenuButtons.VIEW_OTHERS_BALANCE.name.lower()),
+                InlineKeyboardButton(text=MainMenuButtons.VIEW_DEALS_HISTORY.value, callback_data=MainMenuButtons.VIEW_DEALS_HISTORY.name.lower())
+            ],
+            [
+                InlineKeyboardButton(text=MainMenuButtons.FIND_SERVICE.value, callback_data=MainMenuButtons.FIND_SERVICE.name.lower()),
+                InlineKeyboardButton(text=MainMenuButtons.CONFIRM_DEAL.value, callback_data=MainMenuButtons.CONFIRM_DEAL.name.lower())
+            ],
+            [
+                InlineKeyboardButton(text=MainMenuButtons.SUPPORT.value, callback_data=MainMenuButtons.SUPPORT.name.lower()),
+                InlineKeyboardButton(text=MainMenuButtons.CLOSE.value, callback_data=CommandsBot.CLOSE.value.lower())
             ]
         ]
     )
@@ -47,15 +50,6 @@ def get_menu_keyboard_for_developer() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text=CommandsBot.STOP_BOT.value.lower(), callback_data=CommandsBot.STOP_BOT.value.lower())]
     ],
     )
-
-
-
-
-
-
-
-
-
 
 
 
