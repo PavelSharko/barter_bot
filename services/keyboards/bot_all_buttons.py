@@ -24,6 +24,8 @@ class ModeratorChatButtons(str, Enum):
     MENU = "меню модератора"
     VIEW_NEW_APPLICATIONS = "Просмотреть новые заявки"
     EXCLUDE_PARTICIPANT = "Исключить участника"
+    SEND_COINS = "Начислить монеты"
+    SHOW_BALANCE = "Мой баланс"
 
 
 

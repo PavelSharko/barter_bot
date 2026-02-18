@@ -77,7 +77,18 @@ async def handle_callback_from_admin_bot(call, state, bot):
         return
 
     if call.data == ModeratorChatButtons.EXCLUDE_PARTICIPANT.name.lower():
+        from services.comands.admin_commands.exclude_participant import start_exclude_participant_input
         await start_exclude_participant_input(call, bot, state)
+        return
+
+    if call.data == ModeratorChatButtons.SEND_COINS.name.lower():
+        from services.comands.admin_commands.send_coins import start_send_coins_input
+        await start_send_coins_input(call, bot, state)
+        return
+
+    if call.data == ModeratorChatButtons.SHOW_BALANCE.name.lower():
+        from services.comands.users_commands.show_balance import show_user_balance
+        await show_user_balance(call, bot)
         return
 
     # Обработка действий модератора (Принять/Отклонить)

@@ -35,6 +35,7 @@ from services.send_msg_utils.utuls_send_msg import safe_send_message
 from services.state_bot.global_store import FSM, global_msg_fast, add_message, global_msg_contacted_fast, \
     global_msg_for_close
 from services.users_utils.all_users_manager import register_and_check_user, get_all_users
+from services.users_utils.check_blocked import check_blocked_user
 
 from handlers.fsm_utils import set_waiting_input
 from aiogram.types import CallbackQuery, Message
@@ -69,6 +70,12 @@ def register_handlers(dp, bot):
     @dp.message(FSM.waiting_input)
     async def universal_input_handler(message: types.Message, state: FSMContext):
         # todo создать фасад чтобы срань эту убрать которая тут будет если все в куче отловить
+
+        user_id = message.from_user.id
+        
+        # --- Check Blocked ---
+        if await check_blocked_user(user_id, bot, message):
+            return
 
         # Получаем данные состояния
         data = await state.get_data()
@@ -110,6 +117,10 @@ def register_handlers(dp, bot):
             from services.comands.admin_commands.exclude_participant import process_exclude_participant_input
             await process_exclude_participant_input(message, state, bot)
 
+        elif current_command == ModeratorChatButtons.SEND_COINS.name.lower():
+            from services.comands.admin_commands.send_coins import process_send_coins_input
+            await process_send_coins_input(message, state, bot)
+
 
 
 
@@ -124,6 +135,10 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
     try:
         user_id = call.from_user.id
         chat_id = call.message.chat.id
+        
+        # --- Check Blocked ---
+        if await check_blocked_user(user_id, bot, call):
+            return
 
 
         if call.data == CommandsBot.CLOSE.value.lower():
@@ -143,43 +158,21 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
             """ТОЛЬКО ДЛЯ админов которые управляют ботом  от имени компании"""
             await handle_callback_from_admin_bot(call, state, bot)
 
-      
 
-        elif call.data == CommandsBot.MENU.value.lower():
-            await clear_messages(user_id, global_msg_fast)
-            msg = await call.message.answer(
-                menu_msg,
-                reply_markup=get_inline_keyboard_menu_for_users()
-            )
-            add_message(global_msg_fast, user_id, msg)
-            return
+            """ТОЛЬКО ДЛЯ админов которые управляют ботом  от имени компании"""
+        # elif call.data == CommandsBot.MENU.value.lower():
+        #     await clear_messages(user_id, global_msg_fast)
+        #     msg = await call.message.answer(
+        #         menu_msg,
+        #         reply_markup=get_inline_keyboard_menu_for_users()
+        #     )
+        #     add_message(global_msg_fast, user_id, msg)
+        #     return
 
         # Обработка кнопок регистрации профиля
         elif call.data in [item.name.lower() for item in ProfileRegistration_Menu]:
             await handle_profile_registration_callbacks(bot, call, user_id, state)
 
-
-
-
-
-
-
-
-
-        elif call.data == MainMenuButtons.EX_BUTTON_FOR_INSERT_ANYTHING.value.lower():
-            """ТАК ВЫЗЫВАЮТСЯ КОМАНДЫ ПОСЛЕ КОТОРЫХ НАДО ОБРАБОТАТЬ ДАННЫЕ КОТОРЫЕ ОТПРАВИТ ПОЛЬЗОВАТЕЛЬ"""
-            await set_waiting_input(
-                state, bot, chat_id, user_id,
-                command_name=MainMenuButtons.EX_BUTTON_FOR_INSERT_ANYTHING.name.lower(),
-                timeout=config.TIME_TO_INPUT_MSG_FSM
-            )
-            msg = await bot.send_message(
-                chat_id,
-                f"это заглушка - типовой ответ на {MainMenuButtons.EX_BUTTON_FOR_INSERT_ANYTHING.value}я готов принять от вас инфу и что-то с ней делать",
-                reply_markup=get_cancel_keyboard()
-            )
-            add_message(global_msg_fast, user_id, msg)
-            # далее надо вызвать метод в блоке где ловятся waiting_inputs который что-то сделает с этой инфой
             return
 
     except Exception as e:
@@ -190,6 +183,11 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
 
 async def handler_comands_or_simple_msg(message: Message, bot):
     user_id = message.from_user.id
+    
+    # --- Check Blocked ---
+    if await check_blocked_user(user_id, bot, message):
+         return
+
     text = (message.text or "").casefold()  # нормализуем сразу
 
 

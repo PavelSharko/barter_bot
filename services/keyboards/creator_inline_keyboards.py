@@ -11,6 +11,7 @@ def get_moderator_menu_keyboard() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text=ModeratorChatButtons.VIEW_NEW_APPLICATIONS.value, callback_data=ModeratorChatButtons.VIEW_NEW_APPLICATIONS.name.lower())],
         [InlineKeyboardButton(text=ModeratorChatButtons.EXCLUDE_PARTICIPANT.value, callback_data=ModeratorChatButtons.EXCLUDE_PARTICIPANT.name.lower())],
         [InlineKeyboardButton(text=ModeratorChatButtons.SEND_COINS.value, callback_data=ModeratorChatButtons.SEND_COINS.name.lower())],
+        [InlineKeyboardButton(text=ModeratorChatButtons.SHOW_BALANCE.value, callback_data=ModeratorChatButtons.SHOW_BALANCE.name.lower())],
         [InlineKeyboardButton(text=CommandsBot.CLOSE.value, callback_data=CommandsBot.CLOSE.value.lower())]
     ])
 
