@@ -371,3 +371,135 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         )
         add_message(global_msg_fast, user_id, msg)
         return
+
+    # 8. Исполнитель принимает заявку (ACCEPT_REQUEST)
+    elif data.startswith(f"{MainMenuButtons.ACCEPT_REQUEST.name.lower()}_"):
+        try:
+            _, deal_id = data.rsplit('_', 1)
+        except ValueError:
+            await call.answer("Ошибка данных", show_alert=True)
+            return
+
+        deals = load_deals_locked()
+        deal = deals.get(deal_id)
+        if not deal:
+            await call.answer("Сделка не найдена", show_alert=True)
+            return
+            
+        if deal.get(DealFields.STATUS_DEAL.value) != DealStatus.PENDING_CONFIRMATION.value:
+            await call.answer("Заявка уже обработана", show_alert=True)
+            return
+
+        # Обновляем статус
+        deal[DealFields.STATUS_DEAL.value] = DealStatus.IN_PROGRESS.value
+        save_deals_locked(deals)
+        
+        # Редактируем сообщение (убираем клавиатуру, добавляем ✅ принято)
+        try:
+            original_text = call.message.text
+            new_text = f"{original_text}\n\n✅ <b>Принято</b>"
+            await call.message.edit_text(new_text, reply_markup=None, parse_mode="HTML")
+        except Exception as e:
+            print(f"Ошибка редактирования сообщения: {e}")
+
+        # Получаем данные сторон
+        client_id = deal.get(DealFields.SERVICE_CLIENT_ID.value)
+        provider_id = user_id
+        
+        users_dict = load_all_users()
+        
+        client_data = users_dict.get(client_id) or users_dict.get(str(client_id)) or {}
+        client_tg = client_data.get(UserFields.NAME_TG.value, f"ID {client_id}")
+        if not client_tg.startswith("@") and client_tg != f"ID {client_id}":
+            client_tg = f"@{client_tg}"
+            
+        provider_data = users_dict.get(provider_id) or users_dict.get(str(provider_id)) or {}
+        provider_tg = provider_data.get(UserFields.NAME_TG.value, f"ID {provider_id}")
+        if not provider_tg.startswith("@") and provider_tg != f"ID {provider_id}":
+            provider_tg = f"@{provider_tg}"
+
+        # Отправляем сообщение исполнителю
+        try:
+            await bot.send_message(
+                chat_id=provider_id,
+                text=f"Для того чтобы договориться об услуге, напишите {client_tg} или подождите, пока он вам сам напишет."
+            )
+        except Exception as e:
+            print(f"Ошибка отправки контактов исполнителю: {e}")
+
+        # Отправляем сообщение клиенту
+        service_name = deal.get(DealFields.SERVICE_NAME.value, "Услуга")
+        try:
+            await bot.send_message(
+                chat_id=client_id,
+                text=f"Заявка на услугу <b>{service_name}</b> получена и принята! Для обсуждения деталей свяжитесь с {provider_tg}.",
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            print(f"Ошибка отправки контактов клиенту: {e}")
+
+        await call.answer("Заявка принята!")
+        return
+
+    # 9. Исполнитель отклоняет заявку (REJECT_REQUEST)
+    elif data.startswith(f"{MainMenuButtons.REJECT_REQUEST.name.lower()}_"):
+        try:
+            _, deal_id = data.rsplit('_', 1)
+        except ValueError:
+            await call.answer("Ошибка данных", show_alert=True)
+            return
+
+        deals = load_deals_locked()
+        deal = deals.get(deal_id)
+        if not deal:
+            await call.answer("Сделка не найдена", show_alert=True)
+            return
+
+        if deal.get(DealFields.STATUS_DEAL.value) != DealStatus.PENDING_CONFIRMATION.value:
+            await call.answer("Заявка уже обработана", show_alert=True)
+            return
+
+        # Обновляем статус
+        deal[DealFields.STATUS_DEAL.value] = DealStatus.CANCELLED.value
+        save_deals_locked(deals)
+
+        # Редактируем сообщение (убираем клавиатуру, добавляем 🛑 отклонили запрос)
+        try:
+            original_text = call.message.text
+            new_text = f"{original_text}\n\n🛑 <b>Отклонили запрос</b>"
+            await call.message.edit_text(new_text, reply_markup=None, parse_mode="HTML")
+        except Exception as e:
+            print(f"Ошибка редактирования сообщения: {e}")
+
+        client_id = deal.get(DealFields.SERVICE_CLIENT_ID.value)
+        price_to_refund = float(deal.get(DealFields.PRICE_IN_COINS.value, 0))
+        required_amount = round(price_to_refund * 1.1, 2)
+        
+        # Разблокируем монеты клиенту
+        lock = FileLock(f"{config.ALL_USERS_PATH}.lock")
+        with lock:
+            from services.users_utils.all_users_manager import ALL_USERS_LIST
+            users = load_all_users()
+            buyer_data = users.get(client_id) or users.get(str(client_id))
+            if buyer_data:
+                current_block = float(buyer_data.get(UserMetrics.BLOCK_BALANCE.value, 0))
+                # Защита от отрицательного баланса блокировки
+                new_block = max(0.0, current_block - required_amount)
+                buyer_data[UserMetrics.BLOCK_BALANCE.value] = round(new_block, 2)
+                ALL_USERS_LIST.clear()
+                ALL_USERS_LIST.update(users)
+                save_all_users()
+
+        service_name = deal.get(DealFields.SERVICE_NAME.value, "Услуга")
+        # Уведомляем клиента об отмене
+        try:
+            await bot.send_message(
+                chat_id=client_id,
+                text=f"К сожалению, исполнитель отклонил вашу заявку на услугу <b>{service_name}</b>.\nВаши <b>{required_amount:g}</b> монет разблокированы.",
+                parse_mode="HTML"
+            )
+        except Exception as e:
+            print(f"Ошибка отправки уведомления об отмене клиенту: {e}")
+
+        await call.answer("Заявка отклонена, средства возвращены клиенту.")
+        return

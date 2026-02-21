@@ -184,7 +184,7 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
         #     return
 
         # Обработка кнопок из MainMenuButtons
-        elif (
+        if (
             call.data in [item.name.lower() for item in MainMenuButtons] or
             call.data.startswith(f"{MainMenuButtons.FIND_SERVICE.name.lower()}_") or
             call.data.startswith(f"{MainMenuButtons.REVIEWS.name.lower()}_") or
@@ -197,14 +197,13 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
             return
 
         # Обработка кнопок из EditProfileButtons
-        elif call.data in [item.name.lower() for item in EditProfileButtons]:
+        if call.data in [item.name.lower() for item in EditProfileButtons]:
             await handle_edit_profile_callbacks(bot, call, state)
             return
 
         # Обработка кнопок регистрации профиля
-        elif call.data in [item.name.lower() for item in ProfileRegistration_Menu]:
+        if call.data in [item.name.lower() for item in ProfileRegistration_Menu]:
             await handle_profile_registration_callbacks(bot, call, user_id, state)
-
             return
 
     except Exception as e:
