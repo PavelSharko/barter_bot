@@ -2,6 +2,7 @@ from aiogram import Bot
 from aiogram.types import Message, CallbackQuery
 
 from entity.Enums_entity import UserMetrics
+from services.keyboards.sustem_inline_keyboard import get_inline_keyboard_close
 from services.users_utils.all_users_manager import load_all_users
 from services.state_bot.global_store import add_message, global_msg_fast
 

@@ -6,6 +6,7 @@ from initApp.config_loader import config
 from services.keyboards.bot_all_buttons import ProfileRegistration_Menu
 from services.keyboards.creator_persistent_keyboards import get_cancel_keyboard
 from services.msgs_utils.deleter_messages import clear_messages
+from services.msgs_utils.prepared_massages import info_about_product
 from services.state_bot.global_store import global_msg_contacted_fast, add_message
 from entity.Enums_entity import UserLifecycleStatus, UserFields
 from services.users_utils.all_users_manager import load_all_users, save_all_users
@@ -62,7 +63,7 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
         await set_waiting_input(state, bot, chat_id, user_id, command_name, timeout=time_for_input_words)
         msg = await bot.send_message(
             chat_id=chat_id,
-            text="📝 Введите описание товара/услуги (до 500 символов):"
+            text=info_about_product
         )
         add_message(global_msg_contacted_fast, user_id, msg)
         return
@@ -154,7 +155,6 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
         
         profile = get_profile(user_id) or {}
         
-        # Формируем текст анкеты для модератора
         name = profile.get(UserProfileFields.NAME.value) or "Не указано"
         area = profile.get(UserProfileFields.AREA.value) or "Не указано"
         service = profile.get(UserProfileFields.SERVICE_NAME.value) or "Не указано"
@@ -162,16 +162,17 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
         price = profile.get(UserProfileFields.PRICE_INFO.value) or "Не указано"
         links = "\n".join(profile.get(UserProfileFields.SOCIAL_LINKS.value, [])) or "Не указано"
         
+        import html
         moderator_text = (
-            f"🆕 **Новая заявка на вступление!**\n"
-            f"ID: `{user_id}`\n"
-            f"Username: @{call.from_user.username}\n\n"
-            f"**ФИО**: {name}\n"
-            f"**Район**: {area}\n"
-            f"**Товар/Услуга**: {service}\n"
-            f"**Описание**: {desc}\n"
-            f"**Прайс**: {price}\n"
-            f"**Ссылки**: \n{links}\n"
+            f"🆕 <b>Новая заявка на вступление!</b>\n"
+            f"ID: <code>{user_id}</code>\n"
+            f"Username: @{html.escape(str(call.from_user.username))}\n\n"
+            f"<b>ФИО</b>: {html.escape(str(name))}\n"
+            f"<b>Район</b>: {html.escape(str(area))}\n"
+            f"<b>Товар/Услуга</b>: {html.escape(str(service))}\n"
+            f"<b>Описание</b>: {html.escape(str(desc))}\n"
+            f"<b>Прайс</b>: {html.escape(str(price))}\n"
+            f"<b>Ссылки</b>: \n{html.escape(str(links))}\n"
         )
 
         # Отправляем модератору
@@ -179,7 +180,7 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
             await bot.send_message(
                 chat_id=config.MODERATOR_CONTACT_ID,
                 text=moderator_text,
-                parse_mode="Markdown",
+                parse_mode="HTML",
                 reply_markup=get_moderator_approval_keyboard(user_id)
             )
         except Exception as e:

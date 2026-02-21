@@ -49,7 +49,9 @@ class MainMenuButtons(str, Enum):
     REVIEWS = "отзывы"
     CREATE_DEAL = "создать сделку"
     BACK_TO_SERVICES = "назад к услугам"
-    CLOSE = "Закрыть ❌"
+    ACCEPT_TERMS = "принимаю условия"
+    ACCEPT_REQUEST = "принять запрос"
+    REJECT_REQUEST = "отклонить запрос"
 
 # --- Команды редактирования профиля ---
 class EditProfileButtons(str, Enum):

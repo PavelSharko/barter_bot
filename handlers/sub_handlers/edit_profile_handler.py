@@ -3,6 +3,7 @@ from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
 
 from services.keyboards.bot_all_buttons import EditProfileButtons, MainMenuButtons
+from services.keyboards.sustem_inline_keyboard import get_inline_keyboard_close
 from services.state_bot.global_store import add_message, global_msg_fast
 from services.keyboards.edit_profile_keyboards import get_edit_profile_menu_keyboard
 from services.msgs_utils.deleter_messages import clear_messages
@@ -46,7 +47,6 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         from services.keyboards.edit_profile_keyboards import get_moderator_approval_changes_keyboard
         from services.users_utils.user_profile_manager import get_profile
         from services.keyboards.creator_persistent_keyboards import get_persistent_main_menu
-        
         # Меняем статус
         update_user_field(user_id, UserFlags.CHANGES_PROFILE_CONFIRMED.value, ChangesProfileStatus.WAITING_CONFIRMATION.value)
         
@@ -58,24 +58,24 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         desc = profile.get(UserProfileFields.SERVICE_DESCRIPTION.value) or "Не указано"
         price = profile.get(UserProfileFields.PRICE_INFO.value) or "Не указано"
         links = "\n".join(profile.get(UserProfileFields.SOCIAL_LINKS.value, [])) or "Не указано"
-        
+
+        import html
         moderator_text = (
-            f"⚠️ **Клиент внес изменения в профиль!**\n"
-            f"ID: `{user_id}`\n"
-            f"Username: @{call.from_user.username}\n\n"
-            f"**ФИО**: {name}\n"
-            f"**Район**: {area}\n"
-            f"**Товар/Услуга**: {service}\n"
-            f"**Описание**: {desc}\n"
-            f"**Прайс**: {price}\n"
-            f"**Ссылки**: \n{links}\n"
+            f"⚠️ <b>Клиент внес изменения в профиль!</b>\n"
+            f"ID: <code>{user_id}</code>\n"
+            f"Username: @{html.escape(str(call.from_user.username))}\n\n"
+            f"<b>ФИО</b>: {html.escape(str(name))}\n"
+            f"<b>Район</b>: {html.escape(str(area))}\n"
+            f"<b>Товар/Услуга</b>: {html.escape(str(service))}\n"
+            f"<b>Описание</b>: {html.escape(str(desc))}\n"
+            f"<b>Прайс</b>: {html.escape(str(price))}\n"
+            f"<b>Ссылки</b>: \n{html.escape(str(links))}\n"
         )
-        
         try:
             msg_mod = await bot.send_message(
                 chat_id=config.MODERATOR_CONTACT_ID,
                 text=moderator_text,
-                parse_mode="Markdown",
+                parse_mode="HTML",
                 reply_markup=get_moderator_approval_changes_keyboard(user_id)
             )
         except Exception as e:

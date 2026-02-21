@@ -36,7 +36,7 @@ def get_edit_profile_menu_keyboard(user_id: int) -> InlineKeyboardMarkup:
     # Добавляем кнопку Закрыть
     keyboard.append([
         InlineKeyboardButton(
-            text=MainMenuButtons.CLOSE.value, 
+            text=CommandsBot.CLOSE.value,
             callback_data=CommandsBot.CLOSE.value.lower()
         )
     ])

@@ -188,7 +188,10 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
             call.data in [item.name.lower() for item in MainMenuButtons] or
             call.data.startswith(f"{MainMenuButtons.FIND_SERVICE.name.lower()}_") or
             call.data.startswith(f"{MainMenuButtons.REVIEWS.name.lower()}_") or
-            call.data.startswith(f"{MainMenuButtons.CREATE_DEAL.name.lower()}_")
+            call.data.startswith(f"{MainMenuButtons.CREATE_DEAL.name.lower()}_") or
+            call.data.startswith(f"{MainMenuButtons.ACCEPT_TERMS.name.lower()}_") or
+            call.data.startswith(f"{MainMenuButtons.ACCEPT_REQUEST.name.lower()}_") or
+            call.data.startswith(f"{MainMenuButtons.REJECT_REQUEST.name.lower()}_")
         ):
             await handle_callback_main_menu_for_users(call, bot, state)
             return

@@ -66,6 +66,7 @@ class ChangesProfileStatus(str, Enum):
 
 class UserMetrics(str, Enum):
     BALANCE = "balance"
+    BLOCK_BALANCE = "block_balance"
     TOTAL_DEALS_COUNT = "total_deals_count"
     RATING_SUM = "rating_sum"
     RATING_AVG = "rating_avg"
@@ -87,3 +88,22 @@ class UserProfileFields(str, Enum):
     CREATED_AT = "created_at"
     UPDATED_AT = "updated_at"
     VERSION = "version"
+
+class DealStatus(str, Enum):
+    PENDING_CONFIRMATION = "pending_confirmation"
+    FINISHED = "finished"
+    CANCELLED = "cancelled"
+    IN_PROGRESS = "in_progress"
+
+class DealFields(str, Enum):
+    DEAL_ID = "deal_id"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"
+    SERVICE_PROVIDER_ID = "service_provider_id"
+    SERVICE_CLIENT_ID = "service_client_id"
+    SERVICE_NAME = "service_name"
+    PRICE_IN_COINS = "price_in_coins"
+    STATUS_DEAL = "status_deal"
+    DATA_CONFIRMED_AT = "data_confirmed_at"
+    DATA_CANCELLED_AT = "data_cancelled_at"
+    REVIEW_ALREADY_LEFT = "review_already_left"

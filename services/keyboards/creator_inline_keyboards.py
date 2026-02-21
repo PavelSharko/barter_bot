@@ -41,7 +41,7 @@ def get_inline_keyboard_menu_for_users() -> InlineKeyboardMarkup:
             ],
             [
                 # Кнопка закрыть в одну строку в самом конце
-                InlineKeyboardButton(text=MainMenuButtons.CLOSE.value, callback_data=CommandsBot.CLOSE.value.lower())
+                InlineKeyboardButton(text=CommandsBot.CLOSE.value, callback_data=CommandsBot.CLOSE.value.lower())
             ]
         ]
     )
@@ -98,4 +98,18 @@ def get_service_profile_keyboard(target_uid: str) -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text=MainMenuButtons.CREATE_DEAL.value, callback_data=f"{MainMenuButtons.CREATE_DEAL.name.lower()}_{target_uid}")],
         [InlineKeyboardButton(text=MainMenuButtons.BACK_TO_SERVICES.value, callback_data=MainMenuButtons.BACK_TO_SERVICES.name.lower())],
         [InlineKeyboardButton(text=CommandsBot.CLOSE.value, callback_data=CommandsBot.CLOSE.value.lower())]
+    ])
+
+def get_accept_terms_keyboard(provider_uid: str) -> InlineKeyboardMarkup:
+    """Создает клавиатуру для принятия условий сделки."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=MainMenuButtons.ACCEPT_TERMS.value, callback_data=f"{MainMenuButtons.ACCEPT_TERMS.name.lower()}_{provider_uid}")],
+        [InlineKeyboardButton(text=CommandsBot.CLOSE.value, callback_data=CommandsBot.CLOSE.value.lower())]
+    ])
+
+def get_provider_deal_action_keyboard(deal_id: str) -> InlineKeyboardMarkup:
+    """Создает клавиатуру для исполнителя с ответом на новую сделку."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=MainMenuButtons.ACCEPT_REQUEST.value, callback_data=f"{MainMenuButtons.ACCEPT_REQUEST.name.lower()}_{deal_id}")],
+        [InlineKeyboardButton(text=MainMenuButtons.REJECT_REQUEST.value, callback_data=f"{MainMenuButtons.REJECT_REQUEST.name.lower()}_{deal_id}")]
     ])
