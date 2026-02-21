@@ -15,10 +15,9 @@ from entity.Enums_entity import (
     ReviewStatus,
     ProfileStatus,
     UserCategory,
-    Sity
+    Sity,
 )
 
-# Глобальный кэш пользователей
 ALL_USERS_LIST: dict[int, dict] = {}
 
 """
@@ -98,6 +97,7 @@ async def register_and_check_user(user_id: int, bot=None) -> bool:
                 UserFields.UPDATED_AT.value: current_time,
                 UserFlags.RULES_READ.value: False,
                 UserFlags.IS_EXCLUDED.value: False,
+                UserFlags.CHANGES_PROFILE_CONFIRMED.value: ChangesProfileStatus.NOT_CHANGES.value,
                 UserFields.REGION.value: Sity.BALI.value,
                 UserMetrics.BALANCE.value: 0,
                 UserMetrics.TOTAL_DEALS_COUNT.value: 0,

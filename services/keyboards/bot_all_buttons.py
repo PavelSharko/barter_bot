@@ -46,6 +46,9 @@ class MainMenuButtons(str, Enum):
     FIND_SERVICE = "Найти услугу/товар 🔍"
     CONFIRM_DEAL = "Подтвердить сделку ✅"
     SUPPORT = "Поддержка 🆘"
+    REVIEWS = "отзывы"
+    CREATE_DEAL = "создать сделку"
+    BACK_TO_SERVICES = "назад к услугам"
     CLOSE = "Закрыть ❌"
 
 # --- Команды редактирования профиля ---
@@ -98,3 +101,4 @@ class CategoryButtons(str, Enum):
     CAT_50 = "category_50"
     CAT_75 = "category_75"
     CAT_100 = "category_100"
+

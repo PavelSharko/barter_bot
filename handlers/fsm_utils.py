@@ -9,7 +9,10 @@ from services.keyboards.creator_persistent_keyboards import get_persistent_main_
 from services.keyboards.bot_all_buttons import CommandsBot
 from services.msgs_utils.deleter_messages import clear_messages
 from services.send_msg_utils.utuls_send_msg import safe_send_message
-from services.state_bot.global_store import add_message, global_msg_fast, FSM
+from services.state_bot.global_store import add_message, global_msg_fast, FSM, global_msg_for_close
+from services.keyboards.edit_profile_keyboards import get_edit_profile_menu_keyboard
+from services.users_utils.all_users_manager import load_all_users
+from entity.Enums_entity import UserFields, UserLifecycleStatus
 
 """
 Утилиты для работы с конечным автоматом состояний (FSM) в Telegram-боте на aiogram.
@@ -37,8 +40,17 @@ async def check_cancel_input(text: str, message: types.Message, state: FSMContex
 
     if text.lower() == CommandsBot.CANCEL.value.lower():
         add_message(global_msg_fast, message.from_user.id, message)
+        
+        reply_markup = None
+        users = load_all_users()
+        user_data = users.get(user_id)
+        
+        if user_data and user_data.get(UserFields.STATUS.value) == UserLifecycleStatus.CLIENT.value:
+            reply_markup = get_persistent_main_menu()
+
         msg = await message.reply(
-            "🚫 Операция отменена."
+            "🚫 Операция отменена.",
+            reply_markup=reply_markup
         )
         add_message(global_msg_fast, user_id, msg)
         await clear_waiting_input(state, chat_id, user_id)

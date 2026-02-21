@@ -4,6 +4,7 @@ from aiogram.types import Message
 from entity.Enums_entity import UserFlags
 from services.keyboards.bot_all_buttons import CONTACTED_Menu
 from services.keyboards.keyboards_for_CONTACTED import get_agree_keyboard, get_contacted_keyboard, get_anketa_keyboard
+from services.msgs_utils.prepared_massages import rules_text
 from services.users_utils.all_users_manager import load_all_users, save_all_users
 from services.state_bot.global_store import add_message, global_msg_contacted_fast, global_msg_fast
 from services.msgs_utils.deleter_messages import clear_messages
@@ -20,14 +21,7 @@ async def handle_contacted_menu_text_commands(message: Message, bot: Bot):
     if text == CONTACTED_Menu.APPLY_REQUEST.value.casefold():
         add_message(global_msg_contacted_fast, user_id, message)
         await clear_messages(user_id, global_msg_contacted_fast)
-        
-        rules_text = (
-            "📜 **Правила клуба:**\n\n"
-            "1. Уважайте других участников.\n"
-            "2. Выполняйте обязательства по сделкам.\n"
-            "3. Честно описывайте свои услуги.\n\n"
-            "Пожалуйста, прочитайте и примите правила, чтобы продолжить."
-        )
+
         msg = await bot.send_message(
             chat_id=user_id,
             text=rules_text,
@@ -41,13 +35,6 @@ async def handle_contacted_menu_text_commands(message: Message, bot: Bot):
         add_message(global_msg_contacted_fast, user_id, message)
         await clear_messages(user_id, global_msg_contacted_fast)
 
-        rules_text = (
-            "📜 **Правила клуба:**\n\n"
-            "1. Уважайте других участников.\n"
-            "2. Выполняйте обязательства по сделкам.\n"
-            "3. Честно описывайте свои услуги.\n\n"
-            "Пожалуйста, прочитайте и примите правила, чтобы продолжить."
-        )
         msg = await bot.send_message(
             chat_id=user_id,
             text=rules_text,

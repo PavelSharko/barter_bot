@@ -53,6 +53,16 @@ class BlockingStatusFields(str, Enum):
 class UserFlags(str, Enum):
     RULES_READ = "rules_read"
     IS_EXCLUDED = "is_excluded"
+    CHANGES_PROFILE_CONFIRMED = "changes_profile_confirmed"
+
+class ChangesProfileStatus(str, Enum):
+    WAITING_CONFIRMATION = "waiting_confirmation" 
+    CONFIRMED = "confirmed"
+    NOT_CHANGES = "not_changes" 
+    PENDING_CHANGES = "pending_changes"
+
+    
+
 
 class UserMetrics(str, Enum):
     BALANCE = "balance"

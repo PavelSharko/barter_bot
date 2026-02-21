@@ -18,7 +18,8 @@ async def show_user_balance(call: CallbackQuery, bot: Bot):
         
     msg = await call.message.answer(
         f"💰 Ваш баланс: **{balance}** монет",
-        parse_mode="Markdown"
+        parse_mode="Markdown",
+        reply_markup=get_inline_keyboard_close()
     )
     add_message(global_msg_fast, user_id, msg)
     await call.answer()

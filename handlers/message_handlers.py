@@ -19,6 +19,8 @@ from services.comands.users_commands.for_contacted.contacted_menu_inline_handler
 from services.comands.users_commands.for_contacted.to_set_profile_commands import extract_and_save_full_name_from_msg, \
     extract_and_save_area, extract_and_save_product_name, extract_and_save_description, extract_and_save_price, \
     extract_and_save_socials
+from services.comands.users_commands.edit_profile_commands import extract_and_update_name, extract_and_update_area, \
+    extract_and_update_product_name, extract_and_update_description, extract_and_update_price
 from services.comands.users_commands.sub_process1.extract_info_from_msg_procces1 import extract_text_info_from_msg
 from services.keyboards.bot_all_buttons import AdminChatButtons, CommandsBot, MainMenuButtons, SubprocessMenu, \
     CONTACTED_Menu, ProfileRegistration_Menu, ModeratorChatButtons, EditProfileButtons
@@ -109,6 +111,10 @@ def register_handlers(dp, bot):
              from services.comands.admin_commands.moderator_actions import process_rejection_reason
              await process_rejection_reason(message, state, bot)
 
+        elif current_command == "reject_changes_reason":
+             from services.comands.admin_commands.moderator_actions import process_rejection_changes_reason
+             await process_rejection_changes_reason(message, state, bot)
+
         elif current_command == ModeratorChatButtons.EXCLUDE_PARTICIPANT.name.lower():
             from services.comands.admin_commands.exclude_participant import process_exclude_participant_input
             await process_exclude_participant_input(message, state, bot)
@@ -117,13 +123,23 @@ def register_handlers(dp, bot):
             from services.comands.admin_commands.send_coins import process_send_coins_input
             await process_send_coins_input(message, state, bot)
 
+        # для ввода от юзеров бота со статусом клиент (редактирование профиля)
+        elif current_command == EditProfileButtons.EDIT_NAME.value.lower():
+            await extract_and_update_name(message, state, user_id)
+
+        elif current_command == EditProfileButtons.EDIT_AREA.value.lower():
+            await extract_and_update_area(message, state, user_id)
+
+        elif current_command == EditProfileButtons.EDIT_NAME_PRODUCT.value.lower():
+            await extract_and_update_product_name(message, state, user_id)
+
+        elif current_command == EditProfileButtons.EDIT_FULL_INFO_PRODUCT.value.lower():
+            await extract_and_update_description(message, state, user_id)
+
+        elif current_command == EditProfileButtons.EDIT_PRICE.value.lower():
+            await extract_and_update_price(message, state, user_id)
+
         """для ввода от юзеров бота со статусом клиент"""
-
-
-
-
-
-
 
 
 """
@@ -168,7 +184,12 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
         #     return
 
         # Обработка кнопок из MainMenuButtons
-        elif call.data in [item.name.lower() for item in MainMenuButtons]:
+        elif (
+            call.data in [item.name.lower() for item in MainMenuButtons] or
+            call.data.startswith(f"{MainMenuButtons.FIND_SERVICE.name.lower()}_") or
+            call.data.startswith(f"{MainMenuButtons.REVIEWS.name.lower()}_") or
+            call.data.startswith(f"{MainMenuButtons.CREATE_DEAL.name.lower()}_")
+        ):
             await handle_callback_main_menu_for_users(call, bot, state)
             return
 
@@ -213,7 +234,7 @@ async def handler_comands_or_simple_msg(message: Message, bot):
             menu_msg,
             reply_markup=get_inline_keyboard_menu_for_users()
         )
-        add_message(global_msg_for_close, user_id, msg)
+        add_message(global_msg_fast, user_id, msg)
         return
 
     # --- CONTACTED MENU ---
@@ -240,24 +261,31 @@ async def handler_comands_or_simple_msg(message: Message, bot):
         return
 
 
-    # todo проверить условие ниже
-    elif text in [c.value.lower() for c in CommandsBot] or text in [c.value for c in AdminChatButtons]\
-            or text in [c.value for c in MainMenuButtons] or text in [c.value for c in SubprocessMenu]:
-        """Другие команды если случайно текстовая команда бота прилетит которая не обрабатывается еще чтоб в ии не уходила"""
+    # # todo проверить условие ниже
+    # elif text in [c.value.lower() for c in CommandsBot] or text in [c.value for c in AdminChatButtons]\
+    #         or text in [c.value for c in MainMenuButtons] or text in [c.value for c in SubprocessMenu]:
+    #     """Другие команды если случайно текстовая команда бота прилетит которая не обрабатывается еще чтоб в ии не уходила"""
 
-        msg = await message.answer(
-            text="🤖",
-            reply_markup=get_persistent_main_menu()
-        )
-        msg1 = await message.answer(
-            text=f"Воспользуйтесь кнопками для заказа - они есть в --{CommandsBot.MENU.value}--"
-        )
-        add_message(global_msg_fast, user_id, msg)
-        add_message(global_msg_fast, user_id, msg1)
-        return
+    #     msg = await message.answer(
+    #         text="🤖",
+    #         reply_markup=get_persistent_main_menu()
+    #     )
+    #     msg1 = await message.answer(
+    #         text=f"Воспользуйтесь кнопками для заказа - они есть в --{CommandsBot.MENU.value}--"
+    #     )
+    #     add_message(global_msg_fast, user_id, msg)
+    #     add_message(global_msg_fast, user_id, msg1)
+    #     return
 
 
 
     else:
         """ Свободный текст / голос """
+        await clear_messages(user_id, global_msg_fast)
+        msg1 = await message.answer(
+            text=f"Я пока не умею отвечать на свободный текст - воспользуйтесь кнопками  - они есть в --{CommandsBot.MENU.value}--",
+            reply_markup=get_persistent_main_menu()
+        )
+        add_message(global_msg_fast, user_id, msg1)
+        return
         # await get_answer_to_simple_text_from_AI(message, text, user_id)

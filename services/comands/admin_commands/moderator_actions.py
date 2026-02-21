@@ -12,8 +12,6 @@ from services.users_utils.all_users_manager import load_all_users, save_all_user
 from services.state_bot.global_store import global_msg_fast, global_msg_for_close, add_message
 from handlers.fsm_utils import set_waiting_input, check_cancel_input, clear_waiting_input
 
-
-
 # Локальное хранилище для процесса отказа: {admin_id: {'user_id': int, 'message_id': int, 'text': str, 'is_caption': bool}}
 rejection_targets: dict[int, dict] = {}
 
@@ -284,5 +282,125 @@ async def handle_category_selection(call: CallbackQuery, bot: Bot):
         except Exception:
              pass
 
+
+
     # Чистим хранилище
     acceptance_targets.pop(admin_id, None)
+
+# Локальное хранилище для процесса отказа изменений
+rejection_changes_targets: dict[int, dict] = {}
+
+async def handle_moderator_changes_action(call: CallbackQuery, bot: Bot, state: FSMContext):
+    from services.keyboards.bot_all_buttons import EditProfileButtons
+    try:
+        # action name can have underscores, so rsplit by last underscore
+        action, target_id_str = call.data.rsplit('_', 1)
+        user_id = int(target_id_str)
+    except Exception:
+        await call.answer("Ошибка в данных кнопки", show_alert=True)
+        return
+
+    users = load_all_users()
+    if user_id not in users:
+        await call.answer("Пользователь не найден", show_alert=True)
+        return
+
+    msg_text = call.message.caption if call.message.caption else call.message.text
+    is_caption = bool(call.message.caption)
+
+    if action == EditProfileButtons.ACCEPT_CHANGES.name.lower():
+        from services.users_utils.all_users_manager import update_user_field
+        from entity.Enums_entity import UserFlags, ChangesProfileStatus
+        update_user_field(user_id, UserFlags.CHANGES_PROFILE_CONFIRMED.value, ChangesProfileStatus.CONFIRMED.value)
+        
+        # notify user
+        try:
+            msg = await bot.send_message(
+                chat_id=user_id,
+                text="✅ Ваши изменения в анкете подтверждены модератором!",
+                reply_markup=get_persistent_main_menu()
+            )
+            add_message(global_msg_fast, user_id, msg)
+        except Exception:
+            pass
+            
+        new_text = msg_text + "\n\n✅ ИЗМЕНЕНИЯ ПРИНЯТЫ"
+        if is_caption:
+            await call.message.edit_caption(caption=new_text, reply_markup=None)
+        else:
+            await call.message.edit_text(text=new_text, reply_markup=None)
+            
+        await call.answer("Изменения приняты")
+        
+    elif action == EditProfileButtons.REJECT_CHANGES.name.lower():
+        await call.answer("Запрос причины отклонения...")
+        rejection_changes_targets[call.from_user.id] = {
+            'user_id': user_id,
+            'message_id': call.message.message_id,
+            'text': msg_text or "",
+            'is_caption': is_caption
+        }
+        await set_waiting_input(
+            state, bot, call.message.chat.id, call.from_user.id,
+            command_name="reject_changes_reason",
+            timeout=config.TIME_TO_INPUT_MSG_FSM
+        )
+        msg = await bot.send_message(
+            chat_id=call.message.chat.id,
+            text=f"📝 Укажите причину отклонения изменений профиля (мин 10 символов):",
+            reply_markup=get_cancel_keyboard()
+        )
+        add_message(global_msg_fast, call.from_user.id, msg)
+
+
+async def process_rejection_changes_reason(message: Message, state: FSMContext, bot: Bot):
+    if await check_cancel_input(message.text, message, state):
+        rejection_changes_targets.pop(message.from_user.id, None)
+        return
+
+    reason = message.text or ""
+    if len(reason) < 10:
+        msg = await message.answer("⚠️ Причина слишком короткая. Минимум 10 символов.")
+        add_message(global_msg_fast, message.from_user.id, msg)
+        add_message(global_msg_fast, message.from_user.id, message)
+        return
+
+    target_data = rejection_changes_targets.get(message.from_user.id)
+    if not target_data:
+        await message.answer("❌ Ошибка: не найден ID (возможно, прошло много времени).")
+        return
+    
+    target_user_id = target_data['user_id']
+    from services.users_utils.all_users_manager import update_user_field
+    from entity.Enums_entity import UserFlags, ChangesProfileStatus
+    
+    update_user_field(target_user_id, UserFlags.CHANGES_PROFILE_CONFIRMED.value, ChangesProfileStatus.PENDING_CHANGES.value)
+    
+    # Notify user
+    try:
+         msg = await bot.send_message(
+              chat_id=target_user_id,
+              text=f"🚫 Ваши изменения профиля не приняты модератором по причине:\n\n{reason}",
+              reply_markup=get_persistent_main_menu()
+         )
+         add_message(global_msg_fast, target_user_id, msg)
+    except Exception:
+         pass
+         
+    await message.answer("Изменения отклонены, причина отправлена пользователю.")
+    await clear_waiting_input(state, message.chat.id, message.from_user.id)
+    rejection_changes_targets.pop(message.from_user.id, None)
+    
+    origin_msg_id = target_data.get('message_id')
+    origin_text = target_data.get('text', "")
+    is_caption = target_data.get('is_caption', False)
+    
+    if origin_msg_id:
+        new_text = f"{origin_text}\n\n🚫 ИЗМЕНЕНИЯ ОТКЛОНЕНЫ\nПричина: {reason}"
+        try:
+             if is_caption:
+                 await bot.edit_message_caption(chat_id=message.chat.id, message_id=origin_msg_id, caption=new_text, reply_markup=None)
+             else:
+                 await bot.edit_message_text(chat_id=message.chat.id, message_id=origin_msg_id, text=new_text, reply_markup=None)
+        except Exception:
+             pass

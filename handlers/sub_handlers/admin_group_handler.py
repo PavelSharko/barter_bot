@@ -91,6 +91,13 @@ async def handle_callback_from_admin_bot(call, state, bot):
         await show_user_balance(call, bot)
         return
 
+    from services.keyboards.bot_all_buttons import EditProfileButtons
+    if call.data.startswith(f"{EditProfileButtons.ACCEPT_CHANGES.name.lower()}_") or \
+       call.data.startswith(f"{EditProfileButtons.REJECT_CHANGES.name.lower()}_"):
+        from services.comands.admin_commands.moderator_actions import handle_moderator_changes_action
+        await handle_moderator_changes_action(call, bot, state)
+        return
+
     # Обработка действий модератора (Принять/Отклонить)
     if call.data.startswith(f"{ProfileRegistration_Menu.ACCEPT.name.lower()}_") or \
        call.data.startswith(f"{ProfileRegistration_Menu.REJECT.name.lower()}_"):
