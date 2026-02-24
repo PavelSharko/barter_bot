@@ -3,18 +3,21 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from datetime import datetime
 import time
+import html
 
 from filelock import FileLock
 from initApp.config_loader import config
 from services.keyboards.bot_all_buttons import MainMenuButtons
+from services.keyboards.creator_persistent_keyboards import get_persistent_main_menu
 from services.msgs_utils.deleter_messages import clear_messages
 from services.state_bot.global_store import global_msg_fast, add_message
 from services.users_utils.user_profile_manager import load_profiles
 from services.users_utils.deals_manager import load_deals_locked, save_deals_locked
 from entity.Enums_entity import UserProfileFields, UserMetrics, UserFields, UserLifecycleStatus, DealStatus, DealFields
-from services.keyboards.creator_inline_keyboards import get_profile_view_keyboard, get_find_service_keyboard, get_service_profile_keyboard, get_accept_terms_keyboard
+from services.keyboards.creator_inline_keyboards import get_profile_view_keyboard, get_find_service_keyboard, get_service_profile_keyboard, get_accept_terms_keyboard, get_reviews_list_keyboard
 from services.comands.users_commands.show_balance import show_user_balance
 from services.users_utils.all_users_manager import load_all_users, save_all_users
+from services.users_utils.reviews_manager import load_reviews_locked
 from services.keyboards.sustem_inline_keyboard import get_inline_keyboard_close
 
 async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, state: FSMContext):
@@ -24,6 +27,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
     user_id = call.from_user.id
     chat_id = call.message.chat.id
     data = call.data
+    await clear_messages(user_id, global_msg_fast)
 
     # 1. Посмотреть свой профиль
     if data == MainMenuButtons.VIEW_PROFILE.name.lower():
@@ -88,7 +92,6 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             
         user_balances.sort(key=lambda x: x[1], reverse=True)
         
-        import html
         text = f"<b>ОБЩИЙ БАЛАНС МОНЕТ В КЛУБЕ 🪙 - {total_balance:g}</b>\n\n"
         for name, balance in user_balances:
             text += f"- {html.escape(str(name))} - {balance:g} монет\n"
@@ -106,9 +109,69 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
     # 4. История сделок
     elif data == MainMenuButtons.VIEW_DEALS_HISTORY.name.lower():
         await call.answer()
-        msg = await call.message.answer(f"Поймали колбек: {MainMenuButtons.VIEW_DEALS_HISTORY.value}")
-        add_message(global_msg_fast, user_id, msg)
+        
+        deals = load_deals_locked()
+        str_user_id = str(user_id)
+        
+        user_deals = []
+        for d_id, deal in deals.items():
+            s_client = str(deal.get(DealFields.SERVICE_CLIENT_ID.value, ""))
+            s_provider = str(deal.get(DealFields.SERVICE_PROVIDER_ID.value, ""))
+            if str_user_id == s_client or str_user_id == s_provider:
+                user_deals.append((d_id, deal))
+                
+        if not user_deals:
+            msg = await call.message.answer("У вас нет истории сделок.", reply_markup=get_inline_keyboard_close())
+            add_message(global_msg_fast, user_id, msg)
+            return
+            
+        # сортируем по дате создания убыванию
+        user_deals.sort(key=lambda x: str(x[1].get(DealFields.CREATED_AT.value, "")), reverse=True)
+        
+        status_map = {
+            DealStatus.PENDING_CONFIRMATION.value: "🟡 Ожидает подтверждения",
+            DealStatus.IN_PROGRESS.value: "🔵 В процессе",
+            DealStatus.FINISHED.value: "🟢 Завершена",
+            DealStatus.CANCELLED.value: "🔴 Отменена"
+        }
+        
+        chunks = [user_deals[i:i + 3] for i in range(0, len(user_deals), 3)]
+        
+        for i, chunk in enumerate(chunks):
+            response_texts = []
+            for d_id, deal in chunk:
+                service_name = html.escape(str(deal.get(DealFields.SERVICE_NAME.value, "Услуга")))
+                price = deal.get(DealFields.PRICE_IN_COINS.value, 0)
+                status_raw = deal.get(DealFields.STATUS_DEAL.value, "")
+                status_ru = status_map.get(status_raw, status_raw)
+                created_at = deal.get(DealFields.CREATED_AT.value, "Неизвестно")
+                
+                s_client = str(deal.get(DealFields.SERVICE_CLIENT_ID.value, ""))
+                if str_user_id == s_client:
+                    role_str = "заказчик"
+                else:
+                    role_str = "исполнитель"
+                    
+                text = (
+                    f"<b>Название услуги:</b> <u>{service_name}</u>\n"
+                    f"Вы в качестве: <i>{role_str}</i>\n"
+                    f"<b>Статус сделки:</b> {status_ru}\n"
+                    f"<b>Стоимость услуги:</b> {price} 🪙\n"
+                    f"<b>Дата:</b> {created_at}\n"
+                )
+                response_texts.append(text)
+                
+            final_text = "\n\n---\n\n".join(response_texts)
+            
+            # Клавиатуру добавляем только к последнему сообщению
+            reply_markup = get_inline_keyboard_close() if i == len(chunks) - 1 else None
+            
+            msg = await call.message.answer(text=final_text, parse_mode="HTML", reply_markup=reply_markup)
+            add_message(global_msg_fast, user_id, msg)
+            
         return
+
+
 
     # 5. Найти услугу/товар & Возврат назад
     elif data in (MainMenuButtons.FIND_SERVICE.name.lower(), MainMenuButtons.BACK_TO_SERVICES.name.lower()):
@@ -139,7 +202,6 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
              add_message(global_msg_fast, user_id, msg)
              return
              
-        import html
         text = (
             f"👤 <b>Профиль услуги:</b>\n\n"
             f"<b>Имя:</b> {html.escape(str(target_profile.get(UserProfileFields.NAME.value, 'Не указано')))}\n"
@@ -157,18 +219,71 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         add_message(global_msg_fast, user_id, msg)
         return
 
-    # 5.2 Заглушка: просмотр отзывов чужого профиля
+    # 5.2 Просмотр отзывов чужого профиля
     elif data.startswith(f"{MainMenuButtons.REVIEWS.name.lower()}_"):
         await call.answer()
         try:
             _, target_id_str = data.rsplit('_', 1)
         except Exception:
             return
-        msg = await call.message.answer(
-            f"Поймали запрос на просмотр отзыва юзера с айди {target_id_str}",
-            reply_markup=get_inline_keyboard_close()
-        )
+            
+        await clear_messages(user_id, global_msg_fast)
+        
+        target_reviews = []
+        try:
+            reviews_db = load_reviews_locked()
+            for r_id, r_data in reviews_db.items():
+                if r_id.endswith(f"_{target_id_str}"):
+                    target_reviews.append(r_data)
+        except Exception as e:
+            msg = await call.message.answer("⚠️ Не удалось загрузить отзывы.")
+            add_message(global_msg_fast, user_id, msg)
+            return
+
+        if not target_reviews:
+            msg = await call.message.answer(
+                "У этого пользователя пока нет отзывов. 📭",
+                reply_markup=get_inline_keyboard_close()
+            )
+            add_message(global_msg_fast, user_id, msg)
+            return
+
+        # Сортировка по убыванию даты (самые свежие сверху)
+        target_reviews.sort(key=lambda x: str(x.get("created_at", "")), reverse=True)
+        top_5_reviews = target_reviews[:5]
+
+        # Приветственное сообщение
+        msg = await call.message.answer("📝 <b>Вот последние отзывы об этом пользователе:</b>", parse_mode="HTML")
         add_message(global_msg_fast, user_id, msg)
+
+        # Отправка самих отзывов
+        for idx, r in enumerate(top_5_reviews):
+            stars_num = int(r.get("stars", 0))
+            stars_str = "⭐" * stars_num + "⚫️" * (5 - stars_num)
+            
+            role = r.get("role_in_deal", "unknown")
+            role_ru = "Исполнитель" if role == "provider" else "Заказчик" if role == "client" else role
+            
+            text_review = r.get("text", "Без текста")
+            created_at = r.get("created_at", "Неизвестна")
+            
+            formatted_text = (
+                f"<b>Роль в сделке:</b> {role_ru}\n"
+                f"<b>Оценка:</b> {stars_str}\n"
+                f"<b>Дата:</b> {created_at}\n\n"
+                f"💬 <i>{text_review}</i>"
+            )
+            
+            # К последнему отзыву цепляем кнопку 'Закрыть и назад к списку'
+            reply_markup = get_reviews_list_keyboard() if idx == len(top_5_reviews) - 1 else None
+            
+            msg = await call.message.answer(
+                text=formatted_text,
+                parse_mode="HTML",
+                reply_markup=reply_markup
+            )
+            add_message(global_msg_fast, user_id, msg)
+            
         return
 
     # 5.3 Создание сделки с чужим профилем -> Выдача условий
@@ -309,7 +424,6 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         # Уведомляем исполнителя
         from services.keyboards.creator_inline_keyboards import get_provider_deal_action_keyboard
         try:
-            import html
             profiles = load_profiles()
             buyer_profile = profiles.get(user_id) or profiles.get(str(user_id)) or {}
             buyer_name = buyer_profile.get(UserProfileFields.NAME.value)
@@ -336,7 +450,6 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             
         # Уведомляем модератора
         try:
-            import html
             moderator_text = (
                 f"⚠️ <b>Создана новая сделка</b> ⚠️\n"
                 f"ID Сделки: <code>{deal_id}</code>\n"
@@ -355,14 +468,101 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             
         return
 
-    # 6. Подтвердить сделку
+    # 6. CONFIRM_DEAL = "Активные сделки ✅" переход в подменю
     elif data == MainMenuButtons.CONFIRM_DEAL.name.lower():
-        await call.answer()
-        msg = await call.message.answer(f"Поймали колбек: {MainMenuButtons.CONFIRM_DEAL.value}")
+        await call.answer("Сейчас покажу 😉")
+        await clear_messages(call.from_user.id, global_msg_fast)
+        deals = load_deals_locked()
+        profiles = load_profiles()
+        # Получаем сделки, где юзер - клиент
+        client_deals = []
+        for d in deals.values():
+            if d.get(DealFields.SERVICE_CLIENT_ID.value) == user_id and d.get(DealFields.STATUS_DEAL.value) in [DealStatus.PENDING_CONFIRMATION.value, DealStatus.IN_PROGRESS.value]:
+                client_deals.append(d)
+                
+        # Получаем сделки, где юзер - исполнитель
+        provider_deals = []
+        for d in deals.values():
+            if d.get(DealFields.SERVICE_PROVIDER_ID.value) == user_id and d.get(DealFields.STATUS_DEAL.value) == DealStatus.IN_PROGRESS.value:
+                provider_deals.append(d)
+                
+        def format_deal_msg(deal_data, other_user_name, is_client: bool):
+            deal_id = deal_data.get(DealFields.DEAL_ID.value, "Неизвестно")
+            service = html.escape(str(deal_data.get(DealFields.SERVICE_NAME.value, "Неизвестная услуга")))
+            price = deal_data.get(DealFields.PRICE_IN_COINS.value, 0)
+            status = deal_data.get(DealFields.STATUS_DEAL.value, "")
+            
+            # Подстановка статуса на русском
+            if status == DealStatus.PENDING_CONFIRMATION.value:
+                status_ru = "⏳ Ожидает подтверждения"
+            elif status == DealStatus.IN_PROGRESS.value:
+                status_ru = "🔄 В процессе выполнения"
+            else:
+                status_ru = status
+                
+            role_text = "Исполнитель:" if is_client else "Клиент:"
+            clean_name = html.escape(str(other_user_name))
+            
+            return (
+                f"ID Сделки: <code>{deal_id}</code>\n"
+                f"Услуга: <b>{service}</b>\n"
+                f"Сумма: <b>{price:g}</b>\n"
+                f"{role_text} <b>{clean_name}</b>\n"
+                f"Статус: {status_ru}\n\n"
+                f""
+                f"!Важно - не нажимайте ✅Услуга оказана - пока вы не получили услугу - потому что монеты у вас будут сразу списаны"
+            )
+
+        from services.keyboards.creator_inline_keyboards import get_client_deal_keyboard, get_provider_deal_keyboard
+
+        if client_deals:
+            msg = await call.message.answer("список сделок на которые вы записались как клиент 😎")
+            add_message(global_msg_fast, user_id, msg)
+            for deal in client_deals:
+                p_id = deal.get(DealFields.SERVICE_PROVIDER_ID.value)
+                p_profile = profiles.get(p_id) or profiles.get(str(p_id)) or {}
+                p_name = p_profile.get(UserProfileFields.NAME.value) or f"ID {p_id}"
+                
+                deal_id = deal.get(DealFields.DEAL_ID.value)
+                text_msg = format_deal_msg(deal, p_name, True)
+                
+                msg = await call.message.answer(
+                    text=text_msg, 
+                    parse_mode="HTML",
+                    reply_markup=get_client_deal_keyboard(deal_id)
+                )
+                add_message(global_msg_fast, user_id, msg)
+        else:
+            msg = await call.message.answer("у вас нет сделок на котрые вы записались как клиент 🥸")
+            add_message(global_msg_fast, user_id, msg)
+            
+        if provider_deals:
+            msg = await call.message.answer("список открытых сделок где клиенты записались на ваши услуги 😎")
+            add_message(global_msg_fast, user_id, msg)
+            for deal in provider_deals:
+                c_id = deal.get(DealFields.SERVICE_CLIENT_ID.value)
+                c_profile = profiles.get(c_id) or profiles.get(str(c_id)) or {}
+                c_name = c_profile.get(UserProfileFields.NAME.value) or f"ID {c_id}"
+                
+                deal_id = deal.get(DealFields.DEAL_ID.value)
+                text_msg = format_deal_msg(deal, c_name, False)
+                
+                msg = await call.message.answer(
+                    text=text_msg, 
+                    parse_mode="HTML",
+                    reply_markup=get_provider_deal_keyboard(deal_id)
+                )
+                add_message(global_msg_fast, user_id, msg)
+        else:
+            msg = await call.message.answer("у вас нет сделок где клиенты записались на ваши услуги 😎")
+            add_message(global_msg_fast, user_id, msg)
+            
+        msg = await call.message.answer(
+            "это все активные сделки котрые я нашел по вашему профилю",
+            reply_markup=get_inline_keyboard_close()
+        )
         add_message(global_msg_fast, user_id, msg)
         return
-
-    # 7. Поддержка
     elif data == MainMenuButtons.SUPPORT.name.lower():
         await call.answer()
         msg = await call.message.answer(
@@ -377,17 +577,20 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         try:
             _, deal_id = data.rsplit('_', 1)
         except ValueError:
-            await call.answer("Ошибка данных", show_alert=True)
+            await bot.send_message(chat_id=user_id, text="Ошибка данных")
+            await call.answer()
             return
 
         deals = load_deals_locked()
         deal = deals.get(deal_id)
         if not deal:
-            await call.answer("Сделка не найдена", show_alert=True)
+            await bot.send_message(chat_id=user_id, text="Сделка не найдена")
+            await call.answer()
             return
             
         if deal.get(DealFields.STATUS_DEAL.value) != DealStatus.PENDING_CONFIRMATION.value:
-            await call.answer("Заявка уже обработана", show_alert=True)
+            await bot.send_message(chat_id=user_id, text="Заявка уже обработана")
+            await call.answer()
             return
 
         # Обновляем статус
@@ -438,7 +641,8 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         except Exception as e:
             print(f"Ошибка отправки контактов клиенту: {e}")
 
-        await call.answer("Заявка принята!")
+        await bot.send_message(chat_id=user_id, text="Заявка принята!", reply_markup=get_persistent_main_menu())
+        await call.answer()
         return
 
     # 9. Исполнитель отклоняет заявку (REJECT_REQUEST)
@@ -446,17 +650,20 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         try:
             _, deal_id = data.rsplit('_', 1)
         except ValueError:
-            await call.answer("Ошибка данных", show_alert=True)
+            await bot.send_message(chat_id=user_id, text="Ошибка данных")
+            await call.answer()
             return
 
         deals = load_deals_locked()
         deal = deals.get(deal_id)
         if not deal:
-            await call.answer("Сделка не найдена", show_alert=True)
+            await bot.send_message(chat_id=user_id, text="Сделка не найдена")
+            await call.answer()
             return
 
         if deal.get(DealFields.STATUS_DEAL.value) != DealStatus.PENDING_CONFIRMATION.value:
-            await call.answer("Заявка уже обработана", show_alert=True)
+            await bot.send_message(chat_id=user_id, text="Заявка уже обработана")
+            await call.answer()
             return
 
         # Обновляем статус
@@ -501,5 +708,6 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         except Exception as e:
             print(f"Ошибка отправки уведомления об отмене клиенту: {e}")
 
-        await call.answer("Заявка отклонена, средства возвращены клиенту.")
+        await bot.send_message(chat_id=user_id, text="Заявка отклонена, средства возвращены клиенту.")
+        await call.answer()
         return

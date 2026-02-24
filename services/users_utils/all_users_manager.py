@@ -15,7 +15,7 @@ from entity.Enums_entity import (
     ReviewStatus,
     ProfileStatus,
     UserCategory,
-    Sity,
+    Sity, ChangesProfileStatus,
 )
 
 ALL_USERS_LIST: dict[int, dict] = {}

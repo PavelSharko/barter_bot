@@ -7,7 +7,7 @@ from initApp.config_loader import config
 from services.users_utils.all_users_manager import load_all_users, save_all_users
 from services.users_utils.user_profile_manager import load_profiles
 from services.keyboards.bot_all_buttons import ModeratorChatButtons
-from services.keyboards.creator_persistent_keyboards import get_cancel_keyboard
+from services.keyboards.creator_persistent_keyboards import get_cancel_keyboard, get_persistent_moderator_menu
 from services.state_bot.global_store import add_message, global_msg_fast
 from handlers.fsm_utils import set_waiting_input, check_cancel_input, clear_waiting_input
 
@@ -164,7 +164,7 @@ async def process_send_coins_input(message: Message, state: FSMContext, bot: Bot
         f"Кому: `{identifier}` (ID: `{target_user_id}`)\n"
         f"Сумма: **{amount}**\n"
         f"Ваш новый баланс: **{users[moderator_id][UserMetrics.BALANCE.value]}**",
-        parse_mode="Markdown"
+        parse_mode="Markdown", reply_markup=get_persistent_moderator_menu()
     )
     add_message(global_msg_fast, user_id, success_msg)
     add_message(global_msg_fast, user_id, message)

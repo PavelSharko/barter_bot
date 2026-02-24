@@ -44,6 +44,12 @@ while true; do
 
     python3 barter_bot.py "$LOG_LEVEL" "$STEND"
     EXIT_CODE=$?
+    
+    if [ $EXIT_CODE -eq 130 ]; then
+        echo "🛑 Бот остановлен вручную (Ctrl+C). Выход из цикла..."
+        exit 0
+    fi
+
     echo "⚠️ Бот завершился с кодом $EXIT_CODE - перезапуск через 5 секунд..."
     sleep 5
 done

@@ -40,6 +40,7 @@ class UserFields(str, Enum):
     CATEGORY = "category"
     BLOCK_PROFILE_INFO_REASON = "block_anketa_reason"
     REASON_FOR_BLOCKING_USER = "user_block_reason"
+    REGISTRATION_REMINDER_SENT = "registration_reminder_sent"
 
 class BlockingStatusFields(str, Enum):
     BLOCK_ID = "block_id"
@@ -107,3 +108,12 @@ class DealFields(str, Enum):
     DATA_CONFIRMED_AT = "data_confirmed_at"
     DATA_CANCELLED_AT = "data_cancelled_at"
     REVIEW_ALREADY_LEFT = "review_already_left"
+
+class ReviewFields(str, Enum):
+    REVIEW_ID = "review_id"
+    DEAL_ID = "deal_id"
+    ROLE_IN_DEAL = "role_in_deal"
+    STARS = "stars"
+    TEXT = "text"
+    CREATED_AT = "created_at"
+    UPDATED_AT = "updated_at"

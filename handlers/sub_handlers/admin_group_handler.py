@@ -46,25 +46,14 @@ async def some_method_text_msg_from_modertor(message):
 
 async def handle_callback_from_admin_bot(call, state, bot):
     """
-    Обрабатывает callback-запросы, полученные из приватного чата админа с ботом (не из группы).
-
-    Логика:
-    - Подтверждает получение callback без всплывающих уведомлений.
-    - Очищает глобальные быстрые сообщения пользователя.
-    - Обрабатывает конкретные callback-значения, соответствующие кнопкам в меню администратора:
-      - Для кнопок BUTTON1 и BUTTON2 отправляет заглушки-ответы.
-      - Для кнопки BUTTON_FOR_INSERT_ANYTHING переводит бот в состояние ожидания ввода текста/файлов,
-        задаёт таймаут ожидания по конфигу, показывает сообщение с клавиатурой отмены,
-        и сохраняет сообщение в глобальное быстрое хранилище.
-      - Запоминает команду, чтобы потом в другом месте (FSM) обработать введённые данные.
+    Обрабатывает callback-запросы, полученные из приватного чата модерратора  с ботом (не из группы).
     """
-    await call.answer(text="Принято ✅", show_alert=False)
     user_id = call.from_user.id
+    await call.answer("Принято ✅")
     await clear_messages(user_id, global_msg_fast)
 
 
     chat_id = call.message.chat.id
-    user_id = call.message.from_user.id
 
 
     # Обработка действий модератора из меню
@@ -73,7 +62,7 @@ async def handle_callback_from_admin_bot(call, state, bot):
             text=f"вот @ссылка на папку  в гугл диске  базой всех клиентов»\n\n{config.LINK_GOOGLE_FOLDER}",
             reply_markup=get_inline_keyboard_close()
         )
-        add_message(global_msg_for_close, user_id, msg)
+        add_message(global_msg_fast, user_id, msg)
         return
 
     if call.data == ModeratorChatButtons.EXCLUDE_PARTICIPANT.name.lower():
@@ -89,6 +78,11 @@ async def handle_callback_from_admin_bot(call, state, bot):
     if call.data == ModeratorChatButtons.SHOW_BALANCE.name.lower():
         from services.comands.users_commands.show_balance import show_user_balance
         await show_user_balance(call, bot)
+        return
+
+    if call.data == ModeratorChatButtons.ROLLBACK_DEAL.name.lower():
+        from services.comands.admin_commands.rollback_deal_command import start_rollback_deal_input
+        await start_rollback_deal_input(call, bot, state)
         return
 
     from services.keyboards.bot_all_buttons import EditProfileButtons

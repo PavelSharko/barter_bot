@@ -11,7 +11,9 @@ from handlers.sub_handlers.admin_group_handler import handle_callback_from_admin
 from handlers.sub_handlers.developer_chat_handler import some_method_msg_from_develop
 from handlers.sub_handlers.main_menu_handler import handle_callback_main_menu_for_users
 from handlers.sub_handlers.edit_profile_handler import handle_edit_profile_callbacks
+from handlers.sub_handlers.deal_process_handler import handle_deal_process_callbacks
 
+from entity.Enums_entity import UserFields, UserLifecycleStatus
 from initApp.config_loader import config
 from services.comands.developer_commands.standart_comands import save_actual_data
 from services.comands.users_commands.for_contacted.contacted_menu_inline_handler import \
@@ -23,8 +25,9 @@ from services.comands.users_commands.edit_profile_commands import extract_and_up
     extract_and_update_product_name, extract_and_update_description, extract_and_update_price
 from services.comands.users_commands.sub_process1.extract_info_from_msg_procces1 import extract_text_info_from_msg
 from services.keyboards.bot_all_buttons import AdminChatButtons, CommandsBot, MainMenuButtons, SubprocessMenu, \
-    CONTACTED_Menu, ProfileRegistration_Menu, ModeratorChatButtons, EditProfileButtons
+    CONTACTED_Menu, ProfileRegistration_Menu, ModeratorChatButtons, EditProfileButtons, DealProcessButtons, ReviewProcessButtons
 from services.keyboards.creator_inline_keyboards import get_inline_keyboard_menu_for_users
+from services.msgs_utils.check_mandatory_reviews import check_and_enforce_unreviewed_deals
 from services.users_utils.all_users_manager import get_all_users
 from services.comands.users_commands.start_user import start_command_logic
 from services.comands.users_commands.for_contacted.contacted_menu_text_handler import handle_contacted_menu_text_commands
@@ -82,7 +85,10 @@ def register_handlers(dp, bot):
         # Получаем данные состояния
         data = await state.get_data()
         current_command = data.get("current_command")
-        user_id = message.from_user.id
+    
+        # --- Check Mandatory Review ---
+        if await check_and_enforce_unreviewed_deals(user_id, bot, message, is_callback=False, current_data=current_command):
+             return
         
         """для админ чата"""
         if current_command == AdminChatButtons.BUTTON_FOR_INSERT_ANYTHING.name.lower():
@@ -123,6 +129,10 @@ def register_handlers(dp, bot):
             from services.comands.admin_commands.send_coins import process_send_coins_input
             await process_send_coins_input(message, state, bot)
 
+        elif current_command == ModeratorChatButtons.ROLLBACK_DEAL.name.lower():
+            from services.comands.admin_commands.rollback_deal_command import process_rollback_deal_input
+            await process_rollback_deal_input(message, state, bot)
+
         # для ввода от юзеров бота со статусом клиент (редактирование профиля)
         elif current_command == EditProfileButtons.EDIT_NAME.value.lower():
             await extract_and_update_name(message, state, user_id)
@@ -139,6 +149,10 @@ def register_handlers(dp, bot):
         elif current_command == EditProfileButtons.EDIT_PRICE.value.lower():
             await extract_and_update_price(message, state, user_id)
 
+        elif current_command == ReviewProcessButtons.ADD_TEXT_REVIEW.name.lower():
+            from services.comands.users_commands.review_text_commands import extract_and_save_review_text
+            await extract_and_save_review_text(message, state, user_id)
+
         """для ввода от юзеров бота со статусом клиент"""
 
 
@@ -154,9 +168,12 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
         if await check_blocked_user(user_id, bot, call):
             return
 
+        # --- Check Mandatory Review ---
+        if await check_and_enforce_unreviewed_deals(user_id, bot, call, is_callback=True, current_data=call.data):
+            return
+
 
         if call.data == CommandsBot.CLOSE.value.lower():
-            """команды  для всех"""
             await call.answer("❌закрываю")
             await clear_messages(user_id, global_msg_fast, global_msg_for_close)
             return
@@ -206,6 +223,20 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
             await handle_profile_registration_callbacks(bot, call, user_id, state)
             return
 
+        # Обработка кнопок из DealProcessButtons
+        if call.data.startswith(f"{DealProcessButtons.CANCEL_DEAL.name.lower()}_") or \
+           call.data.startswith(f"{DealProcessButtons.SERVICE_DONE.name.lower()}_"):
+            await handle_deal_process_callbacks(call, bot, state)
+            return
+
+        # Обработка кнопок отзывов (ReviewProcessButtons + LEAVE_REVIEW)
+        if any(call.data.startswith(f"{btn.name.lower()}_") for btn in ReviewProcessButtons) or \
+           call.data.startswith(f"{DealProcessButtons.LEAVE_REVIEW.name.lower()}_") or \
+           call.data.startswith(f"{DealProcessButtons.LEAVE_REVIEW_CLIENT.name.lower()}_"):
+            from handlers.sub_handlers.review_process_handler import handle_review_callbacks
+            await handle_review_callbacks(call, bot, state)
+            return
+
     except Exception as e:
         logging.exception(f"Ошибка при обработке кнопки: {e}")
         await call.message.answer(f"⚠️ Ошибка при обработке кнопки: {e}")
@@ -217,6 +248,10 @@ async def handler_comands_or_simple_msg(message: Message, bot):
     
     # --- Check Blocked ---
     if await check_blocked_user(user_id, bot, message):
+         return
+
+    # --- Check Mandatory Review ---
+    if await check_and_enforce_unreviewed_deals(user_id, bot, message, is_callback=False, current_data=""):
          return
 
     text = (message.text or "").casefold()  # нормализуем сразу
@@ -284,9 +319,21 @@ async def handler_comands_or_simple_msg(message: Message, bot):
     else:
         """ Свободный текст / голос """
         await clear_messages(user_id, global_msg_fast)
+        
+        # Загружаем инфу о пользователе
+        users_db = get_all_users()
+        user_data = users_db.get(user_id) or users_db.get(str(user_id)) or {}
+        user_status = user_data.get(UserFields.STATUS.value)
+        
+        # Если статус == client, показываем клавиатуру. Иначе — нет.
+        if user_status == UserLifecycleStatus.CLIENT.value:
+            reply_markup_to_send = get_persistent_main_menu()
+        else:
+            reply_markup_to_send = None
+            
         msg1 = await message.answer(
             text=f"Я пока не умею отвечать на свободный текст - воспользуйтесь кнопками  - они есть в --{CommandsBot.MENU.value}--",
-            reply_markup=get_persistent_main_menu()
+            reply_markup=reply_markup_to_send
         )
         add_message(global_msg_fast, user_id, msg1)
         return

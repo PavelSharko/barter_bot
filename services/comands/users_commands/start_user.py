@@ -49,7 +49,7 @@ async def start_command_logic(message: Message, bot: Bot):
             text=first_start_message,
             reply_markup=get_contacted_keyboard()
         )
-        add_message(global_msg_contacted_fast, user_id, msg)
+        # add_message(global_msg_contacted_fast, user_id, msg)
         return
 
     # 2. Пользователь уже есть - проверяем статус
@@ -62,7 +62,7 @@ async def start_command_logic(message: Message, bot: Bot):
             text=first_start_message,
             reply_markup=get_contacted_keyboard()
         )
-        add_message(global_msg_contacted_fast, user_id, msg)
+        # add_message(global_msg_contacted_fast, user_id, msg)
 
     elif status == UserLifecycleStatus.CANDIDATE.value:
         msg = await bot.send_message(
@@ -77,7 +77,7 @@ async def start_command_logic(message: Message, bot: Bot):
             text=first_start_message,
             reply_markup=get_persistent_main_menu()
         )
-        add_message(global_msg_contacted_fast, user_id, msg)
+        # add_message(global_msg_contacted_fast, user_id, msg)
 
     elif status == UserLifecycleStatus.REJECTED.value:
         # todo: добавить причину отказа из БД

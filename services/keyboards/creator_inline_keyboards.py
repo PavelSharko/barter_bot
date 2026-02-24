@@ -2,8 +2,7 @@ from enum import Enum
 
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
 
-from services.keyboards.bot_all_buttons import CommandsBot, MainMenuButtons, AdminChatButtons, ModeratorChatButtons, EditProfileButtons
-
+from services.keyboards.bot_all_buttons import CommandsBot, MainMenuButtons, AdminChatButtons, ModeratorChatButtons, EditProfileButtons, DealProcessButtons, ReviewProcessButtons
 
 def get_moderator_menu_keyboard() -> InlineKeyboardMarkup:
     """Создаёт кнопку для меню чата с модератором."""
@@ -12,6 +11,7 @@ def get_moderator_menu_keyboard() -> InlineKeyboardMarkup:
         [InlineKeyboardButton(text=ModeratorChatButtons.EXCLUDE_PARTICIPANT.value, callback_data=ModeratorChatButtons.EXCLUDE_PARTICIPANT.name.lower())],
         [InlineKeyboardButton(text=ModeratorChatButtons.SEND_COINS.value, callback_data=ModeratorChatButtons.SEND_COINS.name.lower())],
         [InlineKeyboardButton(text=ModeratorChatButtons.SHOW_BALANCE.value, callback_data=ModeratorChatButtons.SHOW_BALANCE.name.lower())],
+        [InlineKeyboardButton(text=ModeratorChatButtons.ROLLBACK_DEAL.value, callback_data=ModeratorChatButtons.ROLLBACK_DEAL.name.lower())],
         [InlineKeyboardButton(text=CommandsBot.CLOSE.value, callback_data=CommandsBot.CLOSE.value.lower())]
     ])
 
@@ -112,4 +112,59 @@ def get_provider_deal_action_keyboard(deal_id: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=MainMenuButtons.ACCEPT_REQUEST.value, callback_data=f"{MainMenuButtons.ACCEPT_REQUEST.name.lower()}_{deal_id}")],
         [InlineKeyboardButton(text=MainMenuButtons.REJECT_REQUEST.value, callback_data=f"{MainMenuButtons.REJECT_REQUEST.name.lower()}_{deal_id}")]
+    ])
+
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+def get_client_deal_keyboard(deal_id: str) -> InlineKeyboardMarkup:
+    """Клавиатура для клиента (заказчика) в активной сделке.
+    Клиент может:
+    - подтвердить, что услуга оказана
+    - отменить сделку
+    """
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=DealProcessButtons.SERVICE_DONE.value, callback_data=f"{DealProcessButtons.SERVICE_DONE.name.lower()}_{deal_id}")],
+        [InlineKeyboardButton(text=DealProcessButtons.CANCEL_DEAL.value, callback_data=f"{DealProcessButtons.CANCEL_DEAL.name.lower()}_{deal_id}")],
+    ])
+
+
+def get_provider_deal_keyboard(deal_id: str) -> InlineKeyboardMarkup:
+    """Клавиатура для исполнителя (поставщика) в активной сделке.
+    Исполнитель может только запросить отмену.
+    """
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=DealProcessButtons.CANCEL_DEAL.value, callback_data=f"{DealProcessButtons.CANCEL_DEAL.name.lower()}_{deal_id}")]
+    ])
+
+def get_leave_review_keyboard(deal_id: str) -> InlineKeyboardMarkup:
+    """Клавиатура с кнопкой 'Оставить отзыв'."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=DealProcessButtons.LEAVE_REVIEW.value, callback_data=f"{DealProcessButtons.LEAVE_REVIEW.name.lower()}_{deal_id}")]
+    ])
+
+def get_review_stars_keyboard(deal_id: str) -> InlineKeyboardMarkup:
+    """Клавиатура с 5 звездами рейтинга."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text=ReviewProcessButtons.STAR_1.value, callback_data=f"{ReviewProcessButtons.STAR_1.name.lower()}_{deal_id}"),
+            InlineKeyboardButton(text=ReviewProcessButtons.STAR_2.value, callback_data=f"{ReviewProcessButtons.STAR_2.name.lower()}_{deal_id}"),
+            InlineKeyboardButton(text=ReviewProcessButtons.STAR_3.value, callback_data=f"{ReviewProcessButtons.STAR_3.name.lower()}_{deal_id}"),
+            InlineKeyboardButton(text=ReviewProcessButtons.STAR_4.value, callback_data=f"{ReviewProcessButtons.STAR_4.name.lower()}_{deal_id}"),
+            InlineKeyboardButton(text=ReviewProcessButtons.STAR_5.value, callback_data=f"{ReviewProcessButtons.STAR_5.name.lower()}_{deal_id}")
+        ]
+    ])
+
+def get_add_text_review_keyboard(deal_id: str) -> InlineKeyboardMarkup:
+    """Клавиатура для добавления текста отзыва."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=ReviewProcessButtons.ADD_TEXT_REVIEW.value, callback_data=f"{ReviewProcessButtons.ADD_TEXT_REVIEW.name.lower()}_{deal_id}")]
+    ])
+    
+def get_reviews_list_keyboard() -> InlineKeyboardMarkup:
+    """Клавиатура под списком отзывов."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text=MainMenuButtons.BACK_TO_SERVICES.value, callback_data=MainMenuButtons.BACK_TO_SERVICES.name.lower()),
+            InlineKeyboardButton(text="закрыть ❌", callback_data="close_menu_bot")
+        ]
     ])

@@ -12,13 +12,16 @@ async def show_user_balance(call: CallbackQuery, bot: Bot):
     """
     user_id = call.from_user.id
     users = load_all_users()
-    
     balance = 0
+    block_balance = 0
     if user_id in users:
         balance = users[user_id].get(UserMetrics.BALANCE.value, 0)
+        block_balance = users[user_id].get(UserMetrics.BLOCK_BALANCE.value, 0)
         
     msg = await call.message.answer(
-        f"💰 Ваш баланс: **{balance}** монет",
+        f"💰 Ваш баланс: **{balance}** монет\n\n"
+        f"🔒 заблокированные в сделках монеты. = **{block_balance}**\n\n"
+        f"_монеты разблокируются либо после завершения сделки либо отмены_",
         parse_mode="Markdown",
         reply_markup=get_inline_keyboard_close()
     )

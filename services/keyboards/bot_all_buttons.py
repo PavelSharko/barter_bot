@@ -26,6 +26,7 @@ class ModeratorChatButtons(str, Enum):
     EXCLUDE_PARTICIPANT = "Исключить участника"
     SEND_COINS = "Начислить монеты"
     SHOW_BALANCE = "Мой баланс"
+    ROLLBACK_DEAL = "откат сделки🛑"
 
 
 
@@ -44,7 +45,7 @@ class MainMenuButtons(str, Enum):
     VIEW_OTHERS_BALANCE = "Баланс других 👥"
     VIEW_DEALS_HISTORY = "История сделок 📜"
     FIND_SERVICE = "Найти услугу/товар 🔍"
-    CONFIRM_DEAL = "Подтвердить сделку ✅"
+    CONFIRM_DEAL = "Активные сделки ✅"
     SUPPORT = "Поддержка 🆘"
     REVIEWS = "отзывы"
     CREATE_DEAL = "создать сделку"
@@ -52,6 +53,22 @@ class MainMenuButtons(str, Enum):
     ACCEPT_TERMS = "принимаю условия"
     ACCEPT_REQUEST = "принять запрос"
     REJECT_REQUEST = "отклонить запрос"
+
+# --- Команды для процесса сделки---
+class DealProcessButtons(str, Enum):
+    CANCEL_DEAL = "ОТМЕНИТЬ ЗАПИСЬ🛑"
+    SERVICE_DONE = "услуга оказана✅"
+    LEAVE_REVIEW = "поставить рейтинг ⭐️"
+    LEAVE_REVIEW_CLIENT = "написать отзыв 📝"
+
+# --- Команды процесса отзывов ---
+class ReviewProcessButtons(str, Enum):
+    STAR_1 = "1⭐️"
+    STAR_2 = "2⭐️"
+    STAR_3 = "3⭐️"
+    STAR_4 = "4⭐️"
+    STAR_5 = "5⭐️"
+    ADD_TEXT_REVIEW = "добавить текст отзыва"
 
 # --- Команды редактирования профиля ---
 class EditProfileButtons(str, Enum):

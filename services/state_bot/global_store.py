@@ -29,10 +29,7 @@ global_msg_fast: dict[int, list[types.Message]] = {}
 global_msg_contacted_fast: dict[int, list[types.Message]] = {}
 global_msg_for_close: dict[int, list[types.Message]] = {}
 
-# global_msg_after_step: dict[int, list[types.Message]] = {}
-# global_msg_long: dict[int, list[types.Message]] = {}
-# global_msg_after_order: dict[int, list[types.Message]] = {}
-# global_msg_delete_after_confirm_order: dict[int, list[types.Message]] = {}
+
 
 
 
@@ -44,6 +41,14 @@ def add_message(storage: dict[int, list[types.Message]], user_id: int, msg: type
     if user_id not in storage:
         storage[user_id] = []
     storage[user_id].append(msg)
+
+def remove_message_from_all_storages(message_id: int):
+    """Удаляет сообщение с заданным message_id из всех глобальных хранилищ, 
+    чтобы оно больше не удалялось при массовой очистке."""
+    storages = [global_msg_fast, global_msg_contacted_fast, global_msg_for_close]
+    for storage in storages:
+        for user_id, messages in storage.items():
+            storage[user_id] = [msg for msg in messages if msg.message_id != message_id]
 
 
 

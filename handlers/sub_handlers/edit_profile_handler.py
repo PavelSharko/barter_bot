@@ -18,6 +18,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
     user_id = call.from_user.id
     chat_id = call.message.chat.id
     data = call.data
+    await clear_messages(call.from_user.id, global_msg_fast)
 
     
 
@@ -81,7 +82,8 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         except Exception as e:
             print(f"Ошибка отправки модератору: {e}")
             
-        await call.answer("Изменения отправлены на модерацию ✅")
+        await bot.send_message(chat_id=user_id, text="Изменения отправлены на модерацию ✅")
+        await call.answer()
         await clear_messages(user_id, global_msg_fast)
         
         msg = await call.message.answer(
@@ -130,4 +132,5 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         return
 
     # Если кнопка не распознана
-    await call.answer("Неизвестная кнопка", show_alert=True)
+    await bot.send_message(chat_id=user_id, text="Неизвестная кнопка")
+    await call.answer()

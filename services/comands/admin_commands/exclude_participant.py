@@ -4,10 +4,11 @@ from aiogram.fsm.context import FSMContext
 
 from entity.Enums_entity import UserLifecycleStatus, UserFields
 from initApp.config_loader import config
+from services.msgs_utils.deleter_messages import clear_messages
 from services.users_utils.all_users_manager import load_all_users, save_all_users
 from services.users_utils.blocking_manager import blocking_manager
 from services.keyboards.bot_all_buttons import ModeratorChatButtons
-from services.keyboards.creator_persistent_keyboards import get_cancel_keyboard
+from services.keyboards.creator_persistent_keyboards import get_cancel_keyboard, get_persistent_moderator_menu
 from services.state_bot.global_store import add_message, global_msg_fast
 from handlers.fsm_utils import set_waiting_input, check_cancel_input, clear_waiting_input
 
@@ -44,7 +45,7 @@ async def process_exclude_participant_input(message: Message, state: FSMContext,
 
     # Check for cancel
     if await check_cancel_input(message.text, message, state):
-        await clear_messages(global_msg_fast, user_id)
+        await clear_messages(user_id, global_msg_fast)
         return
 
     text = message.text.strip()
@@ -139,7 +140,7 @@ async def process_exclude_participant_input(message: Message, state: FSMContext,
         f"✅ Пользователь `{target_user_id}` успешно заблокирован.\n"
         f"Причина: {reason}\n"
         f"ID блокировки: `{block_id}`",
-        parse_mode="Markdown"
+        parse_mode="Markdown", reply_markup=get_persistent_moderator_menu()
     )
     add_message(global_msg_fast, user_id, message) # Remove input message too?
 

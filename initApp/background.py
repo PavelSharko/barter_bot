@@ -1,6 +1,7 @@
 # background.py
 import asyncio
 
+from scheduler.scheduler import run_registration_reminders, run_auto_cancel_deals
 from services.comands.admin_commands.sender_system_msgs import send_startup_message
 from repository.google_drive_manager import download_db_folder, periodic_upload
 
@@ -19,8 +20,9 @@ async def start_background_tasks(loop, bot):
     """
     # await download_db_folder()
     loop.create_task(delayed_startup_message(bot))
-    # loop.create_task(set_scheduler(bot))
-    loop.create_task(periodic_upload())
+    loop.create_task(run_registration_reminders(bot))
+    loop.create_task(run_auto_cancel_deals(bot))
+    # loop.create_task(periodic_upload())
 
 
 

@@ -5,7 +5,7 @@ from aiogram.fsm.context import FSMContext
 import asyncio
 
 from initApp.config_loader import config
-from services.keyboards.creator_persistent_keyboards import get_persistent_main_menu
+from services.keyboards.creator_persistent_keyboards import get_persistent_main_menu, get_persistent_moderator_menu
 from services.keyboards.bot_all_buttons import CommandsBot
 from services.msgs_utils.deleter_messages import clear_messages
 from services.send_msg_utils.utuls_send_msg import safe_send_message
@@ -49,9 +49,20 @@ async def check_cancel_input(text: str, message: types.Message, state: FSMContex
             reply_markup = get_persistent_main_menu()
 
         msg = await message.reply(
-            "🚫 Операция отменена.",
-            reply_markup=reply_markup
+            "🚫 Операция отменена."
         )
+
+        if str(user_id) == str(config.MODERATOR_CONTACT_ID):
+            reply_markup_persist = get_persistent_moderator_menu()
+        else:
+            reply_markup_persist = get_persistent_main_menu()
+
+        msg_persist = await message.reply(
+            "🪙",
+            reply_markup=reply_markup_persist,
+        )
+
+
         add_message(global_msg_fast, user_id, msg)
         await clear_waiting_input(state, chat_id, user_id)
         return True
