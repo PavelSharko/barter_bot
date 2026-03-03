@@ -144,8 +144,9 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
         await call.answer("Отправлено на проверку 📮")
         msg = await bot.send_message(
             chat_id, 
-            f"✅ Вашу заявку рассмотрит модератор.\n\n"
-            f"Если вам нужно связаться с нашей поддержкой: {config.MODERATOR_USERNAME}"
+            f"Спасибо, что заполнил анкету! 🙏\n\n"
+            f"Мы передали её на проверку модератору — обычно это занимает немного времени. Как только анкета будет одобрена, ты получишь уведомление и доступ ко всем функциям клуба 🌴\n\n"
+            f"Если тебе нужна помощь: {config.MODERATOR_USERNAME}"
         )
         add_message(global_msg_contacted_fast, user_id, msg)
 

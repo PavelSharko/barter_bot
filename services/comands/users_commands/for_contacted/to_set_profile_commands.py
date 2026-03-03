@@ -18,7 +18,7 @@ async def extract_and_save_full_name_from_msg(message, state, user_id):
     text = (message.text or "").strip()
     
     if not text:
-        await send_error(message, user_id, "Вы отправили не текст - введите его")
+        await send_error(message, user_id, "Нужен текст — картинки и файлы здесь не подойдут 🙏 Напиши словами!")
         return
 
     if await check_cancel_input(text, message, state):
@@ -49,7 +49,7 @@ async def extract_and_save_full_name_from_msg(message, state, user_id):
     await clear_waiting_input(state, message.chat.id, user_id)
 
     msg = await message.answer(
-        text=f"✅ Очень приятно, {text}!\n\nТеперь расскажите, с какого вы района?",
+        text=f"✅ Отлично, {text}! Приятно познакомиться 😊\n\nТеперь скажи, пожалуйста — в каких районах ты работаешь? Можно указать несколько, весь остров или написать «онлайн» 🌍",
         reply_markup=get_area_keyboard()
     )
     add_message(global_msg_contacted_fast, user_id, msg)
@@ -79,7 +79,7 @@ async def extract_and_save_area(message, state, user_id):
     await clear_waiting_input(state, message.chat.id, user_id)
 
     msg = await message.answer(
-        text=f"✅ По району понятно.\n\nА теперь скажите как называется товар/услуга которую вы предоставляете?",
+        text=f"✅ Записал!\n\nТеперь скажи — как называется твоя услуга или товар?",
         reply_markup=get_product_name_keyboard()
     )
     add_message(global_msg_contacted_fast, user_id, msg)
@@ -109,7 +109,7 @@ async def extract_and_save_product_name(message, state, user_id):
     await clear_waiting_input(state, message.chat.id, user_id)
 
     msg = await message.answer(
-        text=f"✅ Принято.\n\nТеперь опишите вашу услугу/товар (100-500 символов):",
+        text=f"✅ Принято!\n\nТеперь расскажи о своей услуге или товаре (от 100 до 500 символов) — эту информацию увидят другие участники клуба, так что постарайся описать всё понятно и привлекательно 😊\n\nТакже укажи условия отмены — за какое время ты готов принять отмену без последствий (например: за час, за день, за неделю):",
         reply_markup=get_product_desc_keyboard()
     )
     add_message(global_msg_contacted_fast, user_id, msg)
@@ -145,7 +145,7 @@ async def extract_and_save_description(message, state, user_id):
     await clear_waiting_input(state, message.chat.id, user_id)
 
     msg = await message.answer(
-        text=f"✅ Описание сохранено.\n\nУкажите прайс:",
+        text=f"✅ Описание сохранено!\n\nУкажи прайс в долларах целым числом — 1$ = 1 монета клуба 🪙\n\nКстати, цену здесь лучше поставить такую же, как вне клуба, или чуть ниже — но не выше 😊\n\nЦена будет проверена модератором при одобрении анкеты.",
         reply_markup=get_price_keyboard()
     )
     add_message(global_msg_contacted_fast, user_id, msg)
@@ -175,7 +175,7 @@ async def extract_and_save_price(message, state, user_id):
     await clear_waiting_input(state, message.chat.id, user_id)
 
     msg = await message.answer(
-        text=f"✅ Прайс записан.\n\nУкажите ссылки на соцсети и отзывы:",
+        text=f"✅ Цена записана!\n\nПоследний шаг — скинь ссылки на соцсети или отзывы (Instagram, Telegram и т.д.):",
         reply_markup=get_socials_keyboard()
     )
     add_message(global_msg_contacted_fast, user_id, msg)

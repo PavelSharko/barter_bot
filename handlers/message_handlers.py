@@ -174,7 +174,7 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
 
 
         if call.data == CommandsBot.CLOSE.value.lower():
-            await call.answer("❌закрываю")
+            await call.answer("❌ Убираю всё...")
             await clear_messages(user_id, global_msg_fast, global_msg_for_close)
             return
 
@@ -239,8 +239,9 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
 
     except Exception as e:
         logging.exception(f"Ошибка при обработке кнопки: {e}")
-        await call.message.answer(f"⚠️ Ошибка при обработке кнопки: {e}")
-
+        await call.message.answer(f"⚠️ Что-то пошло не так с кнопкой. Попробуй ещё раз! ({e})")
+    finally:
+        pass
 
 
 async def handler_comands_or_simple_msg(message: Message, bot):
@@ -332,7 +333,7 @@ async def handler_comands_or_simple_msg(message: Message, bot):
             reply_markup_to_send = None
             
         msg1 = await message.answer(
-            text=f"Я пока не умею отвечать на свободный текст - воспользуйтесь кнопками  - они есть в --{CommandsBot.MENU.value}--",
+            text=f"Я пока не читаю свободный текст 🙈 Используй кнопки — они там: {CommandsBot.MENU.value}",
             reply_markup=reply_markup_to_send
         )
         add_message(global_msg_fast, user_id, msg1)

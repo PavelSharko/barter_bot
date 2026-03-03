@@ -86,13 +86,13 @@ async def handle_contacted_menu_text_commands(message: Message, bot: Bot):
         if rules_read:
             msg = await bot.send_message(
                 chat_id=user_id,
-                text="Отлично , расскажите о себе , я спрошу вас обо всем по шагам - для начала давайте заполним ФИО - нажмите на кнопку чтобы внести данные",
+                text="Класс, отлично! 🙌\n\nТеперь давай знакомиться — как тебя зовут? Напиши имя, которое будет отображаться в твоей анкете:",
                 reply_markup=get_full_name_keyboard()
             )
         else:
             msg = await bot.send_message(
                 chat_id=user_id,
-                text="Вы еще не приняли правила клуба ❌",
+                text="Вы еще не приняли правила клуба \n\nБез согласия с правилами вступление невозможно. Принимай правила — возвращайся, мы будем рады! 🌴",
                 reply_markup=get_accept_rules_keyboard()
             )
         add_message(global_msg_contacted_fast, user_id, msg)

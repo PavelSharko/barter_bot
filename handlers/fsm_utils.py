@@ -49,7 +49,7 @@ async def check_cancel_input(text: str, message: types.Message, state: FSMContex
             reply_markup = get_persistent_main_menu()
 
         msg = await message.reply(
-            "🚫 Операция отменена."
+            "🚫 Окей, отменяю. Ничего не сохранено."
         )
 
         if str(user_id) == str(config.MODERATOR_CONTACT_ID):
@@ -121,8 +121,7 @@ async def add_words_timeout(chat_id: int, user_id: int, state: FSMContext, bot, 
                 # ✅ это сообщение не идет в чат почему то
                 msg_cancel = await bot.send_message(
                     chat_id=chat_id,
-                    text=f"⏰ для ввода текста истекло время.\nДля нового вызова команд нажмите {CommandsBot.MENU.value}"
-
+                    text=f"⏰ Время на ввод вышло. Чтобы попробовать снова — нажми {CommandsBot.MENU.value}"
                 )
 
                 # await safe_send_message(

@@ -29,7 +29,7 @@ async def handle_review_callbacks(call: CallbackQuery, bot: Bot, state: FSMConte
         try:
             _, deal_id = data.rsplit('_', 1)
         except ValueError:
-            await bot.send_message(chat_id=user_id, text="Ошибка данных сделки.")
+            await bot.send_message(chat_id=user_id, text="⚠️ Ошибка — попробуй нажать кнопку ещё раз.")
             await call.answer()
             return
             
@@ -63,7 +63,7 @@ async def handle_review_callbacks(call: CallbackQuery, bot: Bot, state: FSMConte
             try:
                 _, deal_id = data.rsplit('_', 1)
             except ValueError:
-                await bot.send_message(chat_id=user_id, text="Ошибка данных сделки при оценке.")
+                await bot.send_message(chat_id=user_id, text="⚠️ Ошибка — попробуй нажать кнопку ещё раз.")
                 await call.answer()
                 return
                 
@@ -79,7 +79,7 @@ async def handle_review_callbacks(call: CallbackQuery, bot: Bot, state: FSMConte
             deals = load_deals_locked()
             deal = deals.get(deal_id)
             if not deal:
-                await bot.send_message(chat_id=user_id, text="Сделка не найдена.")
+                await bot.send_message(chat_id=user_id, text="❌ Сделка не найдена — возможно, она уже устарела.")
                 await call.answer()
                 return
                 
@@ -147,7 +147,7 @@ async def handle_review_callbacks(call: CallbackQuery, bot: Bot, state: FSMConte
         try:
             _, deal_id = data.rsplit('_', 1)
         except ValueError:
-            await bot.send_message(chat_id=user_id, text="Ошибка данных.")
+            await bot.send_message(chat_id=user_id, text="⚠️ Ошибка — попробуй нажать кнопку ещё раз.")
             await call.answer()
             return
             

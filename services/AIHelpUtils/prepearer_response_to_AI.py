@@ -10,7 +10,7 @@ async def get_answer_to_simple_text_from_AI(message, text, user_id):
     url1 = config.STANDART_WEBHOOK_N8N_TEST
     url2 = config.STANDART_WEBHOOK_N8N_PROD
 
-    msg0 = await message.answer("сек плиз - надо уточнить -скоро вернусь с ответом")
+    msg0 = await message.answer("Секунду, уточняю... 🤔 Уже возвращаюсь!")
     add_message(global_msg_fast, user_id, msg0)
 
 

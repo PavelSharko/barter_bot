@@ -38,7 +38,7 @@ async def handle_moderator_action(call: CallbackQuery, bot: Bot, state: FSMConte
         if str(user_id) in users:
             user_id = str(user_id)
         else:
-            await call.answer("Пользователь не найден", show_alert=True)
+            await call.answer("❌ Пользователь не найден в базе.", show_alert=True)
             await call.message.edit_reply_markup(reply_markup=None)
             await call.message.edit_text(call.message.text + "\n\n❌ Пользователь не найден в базе")
             return
@@ -73,7 +73,7 @@ async def handle_moderator_action(call: CallbackQuery, bot: Bot, state: FSMConte
 
     # Логика ОТКЛОНИТЬ (Запрос причины)
     elif action == ProfileRegistration_Menu.REJECT.name.lower():
-        await call.answer("Укажите причину отказа 📝")
+        await call.answer("📝 Укажи причину отказа — клиент её получит.")
         
         # Устанавливаем состояние ожидания ввода (сначала, так как оно делает clear)
         await set_waiting_input(
@@ -93,7 +93,7 @@ async def handle_moderator_action(call: CallbackQuery, bot: Bot, state: FSMConte
         # Отправляем сообщение запроса
         msg = await bot.send_message(
             chat_id=call.message.chat.id,
-            text=f"📝 Введите причину отказа для пользователя {user_id} (минимум 10 символов):",
+            text=f"📝 Напиши причину отказа для {user_id} (минимум 10 символов) — это поможет ему исправить анкету:",
             reply_markup=get_cancel_keyboard()
         )
         add_message(global_msg_fast, call.from_user.id, msg)
@@ -119,7 +119,7 @@ async def process_rejection_reason(message: Message, state: FSMContext, bot: Bot
     target_data = rejection_targets.get(message.from_user.id)
     
     if not target_data:
-        await message.answer("❌ Ошибка: не найден ID (возможно, прошло много времени).")
+        await message.answer("❌ Сессия устарела — скорее всего, прошло слишком много времени. Начни процесс заново.")
         return
 
     target_user_id = target_data.get('user_id')
@@ -135,7 +135,7 @@ async def process_rejection_reason(message: Message, state: FSMContext, bot: Bot
     # Проверка статуса...
     current_status = users[target_user_id].get(UserFields.STATUS.value)
     if current_status == UserLifecycleStatus.REJECTED.value:
-         await message.answer(f"⚠️ Пользователь {target_user_id} уже был отклонен.")
+         await message.answer(f"⚠️ Анкета {target_user_id} уже была отклонена ранее.")
          return
 
     # 1. Обновляем статус
@@ -151,12 +151,12 @@ async def process_rejection_reason(message: Message, state: FSMContext, bot: Bot
     try:
         msg = await bot.send_message(
             chat_id=target_user_id,
-            text=f"🚫 **К сожалению, ваша заявка была отклонена модератором.**\n\nПричина: {reason}",
-            parse_mode="Markdown",
+            text=f"🚫 <b>К сожалению, твоя анкета не прошла проверку.</b>\n\nПричина: {reason}\n\nТы можешь исправить её и подать снова!",
+            parse_mode="HTML",
             reply_markup=get_rejected_keyboard()
         )
         add_message(global_msg_fast, target_user_id, msg)
-        await message.answer(f"✅ Пользователь {target_user_id} отклонен.\nПричина: {reason}")
+        await message.answer(f"✅ Пользователь {target_user_id} отклонён. Причина отправлена: {reason}")
     except Exception as e:
         await message.answer(f"✅ Пользователь отклонен, но не удалось уведомить: {e}")
 
@@ -212,7 +212,7 @@ async def handle_category_selection(call: CallbackQuery, bot: Bot):
     
     selected_value = category_map.get(call.data)
     if selected_value is None:
-         await call.answer("Ошибка данных категории", show_alert=True)
+         await call.answer("⚠️ Ошибка при выборе категории — попробуй ещё раз.", show_alert=True)
          return
 
     users = load_all_users()
@@ -237,18 +237,18 @@ async def handle_category_selection(call: CallbackQuery, bot: Bot):
         msg = await bot.send_message(
             chat_id=int(target_user_id),
             text=(
-                "🎉 **Поздравляем! Ваша анкета одобрена!**\n\n"
-                "Теперь вы полноправный участник клуба.\n"
-                f"Вам присвоена категория: **{selected_value}**\n"
-                f"Ваш баланс пополнен на: **{selected_value}**\n\n"
-                "Пользуйтесь меню для доступа к функциям."
+                "🎉 <b>Добро пожаловать в клуб!</b>\n\n"
+                "Твоя анкета одобрена — ты теперь полноправный участник 🌴\n\n"
+                f"Категория: <b>{selected_value}</b>\n"
+                f"Приветственный бонус: <b>{selected_value} 🪙</b>\n\n"
+                "Открывай меню и начинай обмениваться!"
             ),
-            parse_mode="Markdown",
+            parse_mode="HTML",
             reply_markup=get_persistent_main_menu()
         )
         add_message(global_msg_fast, int(target_user_id), msg)
     except Exception as e:
-        await call.answer(f"Ошибка уведомления юзера: {e}", show_alert=True)
+        await call.answer(f"⚠️ Пользователь одобрён, но уведомление не доставлено: {e}", show_alert=True)
 
     # 3. Обновляем сообщение администратора (меню категорий)
     try:
@@ -257,7 +257,7 @@ async def handle_category_selection(call: CallbackQuery, bot: Bot):
         pass
     
     try:
-        await call.answer(f"Принято: Категория {selected_value} ✅")
+        await call.answer(f"✅ Категория «{selected_value}» назначена.")
     except Exception:
         pass
 
@@ -297,12 +297,12 @@ async def handle_moderator_changes_action(call: CallbackQuery, bot: Bot, state: 
         action, target_id_str = call.data.rsplit('_', 1)
         user_id = int(target_id_str)
     except Exception:
-        await call.answer("Ошибка в данных кнопки", show_alert=True)
+        await call.answer("⚠️ Ошибка в кнопке — попробуй ещё раз.", show_alert=True)
         return
 
     users = load_all_users()
     if user_id not in users:
-        await call.answer("Пользователь не найден", show_alert=True)
+        await call.answer("❌ Пользователь не найден в базе.", show_alert=True)
         return
 
     msg_text = call.message.caption if call.message.caption else call.message.text
@@ -330,7 +330,7 @@ async def handle_moderator_changes_action(call: CallbackQuery, bot: Bot, state: 
         else:
             await call.message.edit_text(text=new_text, reply_markup=None)
             
-        await call.answer("Изменения приняты")
+        await call.answer("✅ Изменения в анкете приняты и сохранены.")
         
     elif action == EditProfileButtons.REJECT_CHANGES.name.lower():
         await call.answer("Запрос причины отклонения...")
@@ -367,7 +367,7 @@ async def process_rejection_changes_reason(message: Message, state: FSMContext, 
 
     target_data = rejection_changes_targets.get(message.from_user.id)
     if not target_data:
-        await message.answer("❌ Ошибка: не найден ID (возможно, прошло много времени).")
+        await message.answer("❌ Сессия устарела — начни процесс проверки заново.")
         return
     
     target_user_id = target_data['user_id']
@@ -387,7 +387,7 @@ async def process_rejection_changes_reason(message: Message, state: FSMContext, 
     except Exception:
          pass
          
-    await message.answer("Изменения отклонены, причина отправлена пользователю.")
+    await message.answer("✅ Правки отклонены. Пользователь получил уведомление с причиной.")
     await clear_waiting_input(state, message.chat.id, message.from_user.id)
     rejection_changes_targets.pop(message.from_user.id, None)
     

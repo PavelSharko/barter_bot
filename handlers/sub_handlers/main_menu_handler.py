@@ -39,7 +39,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         user_profile = profiles.get(user_id) or profiles.get(str(user_id))
         
         if not user_profile:
-             msg = await call.message.answer("⚠️ Профиль не найден.")
+             msg = await call.message.answer("⚠️ Ой, профиль не найден!")
              add_message(global_msg_fast, user_id, msg)
              return
 
@@ -121,7 +121,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
                 user_deals.append((d_id, deal))
                 
         if not user_deals:
-            msg = await call.message.answer("У вас нет истории сделок.", reply_markup=get_inline_keyboard_close())
+            msg = await call.message.answer("Сделок пока не было — самое время начать! 🙂", reply_markup=get_inline_keyboard_close())
             add_message(global_msg_fast, user_id, msg)
             return
             
@@ -178,7 +178,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         await call.answer()
         
         msg = await call.message.answer(
-            "Вот список доступных услуг на острове Бали:", 
+            "Вот кто сейчас есть на острове 🌴", 
             reply_markup=get_find_service_keyboard()
         )
         add_message(global_msg_fast, user_id, msg)
@@ -198,7 +198,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         target_profile = profiles.get(target_id) or profiles.get(str(target_id))
         
         if not target_profile:
-             msg = await call.message.answer("⚠️ Профиль этого пользователя не найден.")
+             msg = await call.message.answer("⚠️ Анкета не найдена — возможно, пользователь её удалил.")
              add_message(global_msg_fast, user_id, msg)
              return
              
@@ -236,13 +236,13 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
                 if r_id.endswith(f"_{target_id_str}"):
                     target_reviews.append(r_data)
         except Exception as e:
-            msg = await call.message.answer("⚠️ Не удалось загрузить отзывы.")
+            msg = await call.message.answer("⚠️ Не получилось загрузить отзывы. Попробуй чуть позже!")
             add_message(global_msg_fast, user_id, msg)
             return
 
         if not target_reviews:
             msg = await call.message.answer(
-                "У этого пользователя пока нет отзывов. 📭",
+                "Отзывов пока нет — первые сделки только впереди! 📭",
                 reply_markup=get_inline_keyboard_close()
             )
             add_message(global_msg_fast, user_id, msg)
@@ -253,7 +253,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         top_5_reviews = target_reviews[:5]
 
         # Приветственное сообщение
-        msg = await call.message.answer("📝 <b>Вот последние отзывы об этом пользователе:</b>", parse_mode="HTML")
+        msg = await call.message.answer("📝 <b>Что говорят другие участники:</b>", parse_mode="HTML")
         add_message(global_msg_fast, user_id, msg)
 
         # Отправка самих отзывов
@@ -297,14 +297,14 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             
         if user_id == target_id:
             msg = await call.message.answer(
-                "Вы не можете создать сделку с самим собой!",
+                "У себя не заказывают 😄 Выбери кого-нибудь из участников клуба!",
                 reply_markup=get_inline_keyboard_close()
             )
             add_message(global_msg_fast, user_id, msg)
             return
             
         msg = await call.message.answer(
-            "вы принимаете условиями оказания и отмены услуги которую выбираете?",
+            "Ты принимаешь условия оказания и отмены этой услуги? 🤝",
             reply_markup=get_accept_terms_keyboard(target_id_str)
         )
         add_message(global_msg_fast, user_id, msg)
@@ -321,7 +321,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             
         if user_id == provider_id:
             msg = await call.message.answer(
-                "Вы не можете создать сделку с самим собой!",
+                "У себя не заказывают 😄 Выбери кого-нибудь из участников клуба!",
                 reply_markup=get_inline_keyboard_close()
             )
             add_message(global_msg_fast, user_id, msg)
@@ -364,7 +364,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
                     existing_deal.get(DealFields.STATUS_DEAL.value) in (DealStatus.PENDING_CONFIRMATION.value, DealStatus.IN_PROGRESS.value)):
                     
                     msg = await call.message.answer(
-                        "У вас уже есть активная заявка к этому пользователю. Дождитесь подтверждения!",
+                        "Подожди немного — твоя заявка к этому человеку уже зарегестрирована и ждёт завершения 🙏",
                         reply_markup=get_inline_keyboard_close()
                     )
                     add_message(global_msg_fast, user_id, msg)
@@ -372,11 +372,11 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             
             if free_balance < required_amount:
                 msg = await call.message.answer(
-                    f"<b>У вас не хватает монет чтобы записаться на услугу!</b>\n"
-                    f"Ваше общее количество монет = <b>{total_balance:g}</b>\n"
-                    f"Заблокировано в других сделках = <b>{block_balance:g}</b>\n"
-                    f"Свободные монеты = <b>{free_balance:g}</b>\n"
-                    f"Требуется = <b>{required_amount:g}</b>",
+                    f"<b>Монет не хватает, чтобы записаться на эту услугу 😔</b>\n\n"
+                    f"Всего монет: <b>{total_balance:g}</b>\n"
+                    f"🔒 Заморожено в других сделках: <b>{block_balance:g}</b>\n"
+                    f"✅ Доступно сейчас: <b>{free_balance:g}</b>\n"
+                    f"Нужно: <b>{required_amount:g}</b>",
                     reply_markup=get_inline_keyboard_close(),
                     parse_mode="HTML"
                 )
@@ -415,7 +415,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         service_name = deal_data[DealFields.SERVICE_NAME.value]
         
         msg = await call.message.answer(
-            f"Сделка создана, {required_amount} монет(ы) заблокировано до оказания услуги или отмены.\n\n Пользователь, который предоставляет услугу <b>{service_name}</b>, получил ваш запрос и как только он подтвердит запрос, вы получите контакты друг друга.",
+            f"Готово! 🎉 <b>{required_amount}</b> монет заморожены как гарант до завершения сделки 🔒\n\n📩 Заявка на <b>{service_name}</b> отправлена! Как только она будет принята — вы получите контакты друг друга.",
             reply_markup=get_inline_keyboard_close(),
             parse_mode="HTML"
         )
@@ -470,7 +470,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
 
     # 6. CONFIRM_DEAL = "Активные сделки ✅" переход в подменю
     elif data == MainMenuButtons.CONFIRM_DEAL.name.lower():
-        await call.answer("Сейчас покажу 😉")
+        await call.answer("Смотри, что нашёл 😉")
         await clear_messages(call.from_user.id, global_msg_fast)
         deals = load_deals_locked()
         profiles = load_profiles()
@@ -516,7 +516,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         from services.keyboards.creator_inline_keyboards import get_client_deal_keyboard, get_provider_deal_keyboard
 
         if client_deals:
-            msg = await call.message.answer("список сделок на которые вы записались как клиент 😎")
+            msg = await call.message.answer("Вот что ты заказал 😎")
             add_message(global_msg_fast, user_id, msg)
             for deal in client_deals:
                 p_id = deal.get(DealFields.SERVICE_PROVIDER_ID.value)
@@ -537,7 +537,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             add_message(global_msg_fast, user_id, msg)
             
         if provider_deals:
-            msg = await call.message.answer("список открытых сделок где клиенты записались на ваши услуги 😎")
+            msg = await call.message.answer("Вот кто записался к тебе 😎")
             add_message(global_msg_fast, user_id, msg)
             for deal in provider_deals:
                 c_id = deal.get(DealFields.SERVICE_CLIENT_ID.value)
@@ -558,7 +558,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             add_message(global_msg_fast, user_id, msg)
             
         msg = await call.message.answer(
-            "это все активные сделки котрые я нашел по вашему профилю",
+            "Это все активные сделки, которые я нашёл по твоему профилю.",
             reply_markup=get_inline_keyboard_close()
         )
         add_message(global_msg_fast, user_id, msg)
@@ -566,7 +566,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
     elif data == MainMenuButtons.SUPPORT.name.lower():
         await call.answer()
         msg = await call.message.answer(
-            f"Для решения любых вопросов вы можете написать нашему модератору {config.MODERATOR_USERNAME}",
+            f"Если что-то пошло не так или есть вопросы — пиши нашему модератору: {config.MODERATOR_USERNAME}",
             reply_markup=get_inline_keyboard_close()
         )
         add_message(global_msg_fast, user_id, msg)
@@ -577,14 +577,14 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         try:
             _, deal_id = data.rsplit('_', 1)
         except ValueError:
-            await bot.send_message(chat_id=user_id, text="Ошибка данных")
+            await bot.send_message(chat_id=user_id, text="⚠️ Ошибка — попробуй нажать кнопку ещё раз.")
             await call.answer()
             return
 
         deals = load_deals_locked()
         deal = deals.get(deal_id)
         if not deal:
-            await bot.send_message(chat_id=user_id, text="Сделка не найдена")
+            await bot.send_message(chat_id=user_id, text="❌ Сделка не найдена — возможно, она уже устарела.")
             await call.answer()
             return
             
@@ -650,14 +650,14 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         try:
             _, deal_id = data.rsplit('_', 1)
         except ValueError:
-            await bot.send_message(chat_id=user_id, text="Ошибка данных")
+            await bot.send_message(chat_id=user_id, text="⚠️ Ошибка — попробуй нажать кнопку ещё раз.")
             await call.answer()
             return
 
         deals = load_deals_locked()
         deal = deals.get(deal_id)
         if not deal:
-            await bot.send_message(chat_id=user_id, text="Сделка не найдена")
+            await bot.send_message(chat_id=user_id, text="❌ Сделка не найдена — возможно, она уже устарела.")
             await call.answer()
             return
 

@@ -14,7 +14,7 @@ async def extract_text_info_from_msg(message: types.Message, state: FSMContext, 
     # проверка что в сообщении есть текст
     text = (message.text or "").strip()
     if not text:
-        msg = await message.answer("Вы не ввели текст - введите его")
+        msg = await message.answer("Нужен текст — картинки и файлы здесь не подойдут 🙏 Напиши словами!")
         add_message(global_msg_fast, user_id, msg)
         return
 

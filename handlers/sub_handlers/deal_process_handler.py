@@ -32,14 +32,14 @@ async def handle_deal_process_callbacks(call: CallbackQuery, bot: Bot, state: FS
         try:
             _, deal_id = data.rsplit('_', 1)
         except ValueError:
-            await bot.send_message(chat_id=user_id, text="Ошибка данных")
+            await bot.send_message(chat_id=user_id, text="⚠️ Ошибка — попробуй нажать кнопку ещё раз.")
             await call.answer()
             return
 
         deals = load_deals_locked()
         deal = deals.get(deal_id)
         if not deal:
-            await bot.send_message(chat_id=user_id, text="Сделка не найдена")
+            await bot.send_message(chat_id=user_id, text="❌ Сделка не найдена — возможно, она уже устарела.")
             await call.answer()
             return
 
@@ -60,7 +60,7 @@ async def handle_deal_process_callbacks(call: CallbackQuery, bot: Bot, state: FS
         provider_name = html.escape(str(provider_name))
 
         if status == DealStatus.CANCELLED.value:
-            await bot.send_message(chat_id=user_id, text="Сделка уже отменена")
+            await bot.send_message(chat_id=user_id, text="ℹ️ Эта сделка уже была отменена ранее.")
             await call.answer()
             return
 
@@ -175,7 +175,7 @@ async def handle_deal_process_callbacks(call: CallbackQuery, bot: Bot, state: FS
             return
             
         else:
-            await bot.send_message(chat_id=user_id, text="Вы не являетесь участником этой сделки.")
+            await bot.send_message(chat_id=user_id, text="Это чужая сделка — ты не можешь управлять ею 🙅")
             await call.answer()
             return
 
@@ -183,21 +183,21 @@ async def handle_deal_process_callbacks(call: CallbackQuery, bot: Bot, state: FS
         try:
             _, deal_id = data.rsplit('_', 1)
         except ValueError:
-            await bot.send_message(chat_id=user_id, text="Ошибка данных")
+            await bot.send_message(chat_id=user_id, text="⚠️ Ошибка — попробуй нажать кнопку ещё раз.")
             await call.answer()
             return
 
         deals = load_deals_locked()
         deal = deals.get(deal_id)
         if not deal:
-            await bot.send_message(chat_id=user_id, text="Сделка не найдена")
+            await bot.send_message(chat_id=user_id, text="❌ Сделка не найдена — возможно, она уже устарела.")
             await call.answer()
             return
 
         status = deal.get(DealFields.STATUS_DEAL.value)
         
         if status == DealStatus.PENDING_CONFIRMATION.value:
-            msg = await bot.send_message(chat_id=user_id, text="Нельзя подтвердить услугу\n\nПричина: Представитель услуги еще не принял ваш запрос на услугу.")
+            msg = await bot.send_message(chat_id=user_id, text="Не так быстро! 🙂\n\nИсполнитель ещё не принял заявку в работу. Подожди его подтверждения.")
             add_message(global_msg_fast, user_id, msg)
             await call.answer()
             return

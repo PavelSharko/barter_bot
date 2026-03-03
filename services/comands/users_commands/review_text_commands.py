@@ -24,7 +24,7 @@ async def extract_and_save_review_text(message: Message, state: FSMContext, user
     # 1. Запрет на медиа/стикеры/фото
     if not message.text:
         msg = await message.answer(
-            "⚠️ Ошибка: Отзыв должен содержать только текст (и эмодзи).\nМедиафайлы не поддерживаются. Пожалуйста, введите отзыв:"
+            "⚠️ Отзыв — это только текст (можно с эмодзи 😊). Картинки и файлы не принимаются. Напиши словами!"
         )
         add_message(global_msg_fast, user_id, msg)
         add_message(global_msg_fast, user_id, message)
@@ -35,7 +35,7 @@ async def extract_and_save_review_text(message: Message, state: FSMContext, user
     # 2. Валидация длины
     if len(text) < 20 or len(text) > 300:
         msg = await message.answer(
-            "⚠️ Ошибка: Длина отзыва должна быть от 20 до 300 символов.\nПожалуйста, введите отзыв заново:"
+            "⚠️ Отзыв должен быть от 20 до 300 символов. Напиши чуть больше или чуть короче — и отправляй!"
         )
         add_message(global_msg_fast, user_id, msg)
         add_message(global_msg_fast, user_id, message) # удалим тоже сам ошибочный текст юзера
@@ -46,7 +46,7 @@ async def extract_and_save_review_text(message: Message, state: FSMContext, user
     deal_id = state_data.get("current_review_deal_id")
     
     if not deal_id:
-        msg = await message.answer("⚠️ Ошибка: Транзакция отзыва не найдена. Попробуйте нажать кнопку оценки еще раз.")
+        msg = await message.answer("⚠️ Не нашёл привязку к сделке. Нажми кнопку оценки ещё раз — это должно помочь!")
         add_message(global_msg_fast, user_id, msg)
         await clear_waiting_input(state, chat_id, user_id)
         return
@@ -76,7 +76,7 @@ async def extract_and_save_review_text(message: Message, state: FSMContext, user
     add_message(global_msg_fast, user_id, message)
     await clear_messages(user_id, global_msg_fast)
     
-    await message.answer("Ваш отзыв успешно сохранен! 🎉", reply_markup = get_persistent_main_menu())
+    await message.answer("Отзыв сохранён, спасибо! 🎉 Ты помогаешь сообществу.", reply_markup = get_persistent_main_menu())
 
     
     await clear_waiting_input(state, chat_id, user_id)

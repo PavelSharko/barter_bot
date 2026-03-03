@@ -31,7 +31,7 @@ async def start_rollback_deal_input(call: CallbackQuery, bot: Bot, state: FSMCon
     )
     
     msg = await call.message.answer(
-        text="Введите ID сделки для её отката (возврат средств и удаление отзыва).\nПример: `17909872531771846780`",
+        text="Введи ID сделки для отката (вернём деньги клиенту, удалим отзыв).\nПример: `17909872531771846780`",
         parse_mode="Markdown",
         reply_markup=get_cancel_keyboard()
     )
@@ -56,7 +56,7 @@ async def process_rollback_deal_input(message: Message, state: FSMContext, bot: 
     deal_id = text
 
     if not deal_id:
-        msg = await message.answer("⚠️ Неверный формат. Введите ID сделки.")
+        msg = await message.answer("⚠️ Неверный формат. Введи числовой ID сделки.")
         add_message(global_msg_fast, user_id, msg)
         add_message(global_msg_fast, user_id, message)
         return
@@ -65,7 +65,7 @@ async def process_rollback_deal_input(message: Message, state: FSMContext, bot: 
     deals = load_deals_locked()
     deal = deals.get(deal_id)
     if not deal:
-        msg = await message.answer(f"❌ Сделка с ID {deal_id} не найдена в базе `deals.json`.")
+        msg = await message.answer(f"❌ Сделка {deal_id} не найдена в базе данных.")
         add_message(global_msg_fast, user_id, msg)
         add_message(global_msg_fast, user_id, message)
         return
@@ -105,7 +105,7 @@ async def process_rollback_deal_input(message: Message, state: FSMContext, bot: 
         # Проверяем, хватает ли у провайдера монет на возврат
         if provider_balance < provider_earnings:
             msg = await message.answer(
-                f"Сорян но тот кто оказывал услугу (ID: {provider_id}) уже потратил полученые деньги - отменить сделку не возможно\n"
+                f"❌ Откат невозможен — исполнитель (ID: {provider_id}) уже потратил полученные монеты. Баланса для возврата недостаточно.\n"
                 f"Его баланс: {provider_balance}, нужно для возврата {provider_earnings}."
             )
             add_message(global_msg_fast, user_id, msg)
@@ -148,6 +148,7 @@ async def process_rollback_deal_input(message: Message, state: FSMContext, bot: 
     # Уведомляем
     success_msg = await message.answer(
         f"✅ Сделка `{deal_id}` успешно отменена.\n"
+        "Деньги возвращены клиенту, отзыв удалён.\n"
         f"- Заказчику возвращено: {total_cost} 🪙\n"
         f"- У исполнителя списано: {provider_earnings} 🪙\n"
         f"- Списана комиссия модератора: {server_commission} 🪙\n"

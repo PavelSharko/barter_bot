@@ -30,10 +30,9 @@ async def check_blocked_user(user_id: int, bot: Bot, event: Union[Message, Callb
         reason = user_data.get(UserFields.REASON_FOR_BLOCKING_USER.value, "Причина не указана")
         
         text = (
-            f"🚫 **Вы заблокированы!**\n\n"
+            f"🚫 **Твой аккаунт заблокирован. По вопросам обращайся к администратору.**\n\n"
             f"**Причина:** {reason}\n\n"
-            f"По правилам клуба вы заблокированы. Если вы считаете, что это ошибка, "
-            f"обратитесь к модератору: ID {config.MODERATOR_CONTACT_ID}"
+            f"Обратись к модератору: ID {config.MODERATOR_CONTACT_ID}"
         )
 
         try:

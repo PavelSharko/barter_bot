@@ -27,7 +27,7 @@ async def some_method_text_msg_from_modertor(message):
         # отправляем inline клавиатуру для модератора
         await clear_messages(user_id, global_msg_fast)
         msg = await message.answer(
-            text=f"Меню управления модератора 👮‍♂️",
+            text=f"👮‍♂️ Панель модератора",
             reply_markup=get_moderator_menu_keyboard()
         )
         add_message(global_msg_fast, user_id, msg)
