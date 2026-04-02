@@ -20,11 +20,13 @@ def load_reviews_locked() -> dict:
 
     try:
         with FileLock(f"{config.REVIEWS_PATH}.lock"):
+            if os.path.getsize(config.REVIEWS_PATH) == 0:
+                return {}
             with open(config.REVIEWS_PATH, "r", encoding="utf-8") as f:
                 data = json.load(f)
                 return data if isinstance(data, dict) else {}
-    except Exception as e:
-        logging.error(f"Ошибка загрузки отзывов: {e}")
+    except (json.JSONDecodeError, Exception) as e:
+        logging.error(f"Ошибка загрузки отзывов (файл поврежден или путь неверен): {e}")
         return {}
 
 

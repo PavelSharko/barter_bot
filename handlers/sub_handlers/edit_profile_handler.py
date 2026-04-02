@@ -55,9 +55,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         profile = get_profile(user_id) or {}
         name = profile.get(UserProfileFields.NAME.value) or "Не указано"
         area = profile.get(UserProfileFields.AREA.value) or "Не указано"
-        service = profile.get(UserProfileFields.SERVICE_NAME.value) or "Не указано"
-        desc = profile.get(UserProfileFields.SERVICE_DESCRIPTION.value) or "Не указано"
-        price = profile.get(UserProfileFields.PRICE_INFO.value) or "Не указано"
+        desc_prof = profile.get(UserProfileFields.DESCRIPTION_PROFESSION.value) or "Не указано"
         links = "\n".join(profile.get(UserProfileFields.SOCIAL_LINKS.value, [])) or "Не указано"
 
         import html
@@ -67,11 +65,18 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
             f"Username: @{html.escape(str(call.from_user.username))}\n\n"
             f"<b>ФИО</b>: {html.escape(str(name))}\n"
             f"<b>Район</b>: {html.escape(str(area))}\n"
-            f"<b>Товар/Услуга</b>: {html.escape(str(service))}\n"
-            f"<b>Описание</b>: {html.escape(str(desc))}\n"
-            f"<b>Прайс</b>: {html.escape(str(price))}\n"
-            f"<b>Ссылки</b>: \n{html.escape(str(links))}\n"
+            f"<b>О себе</b>: {html.escape(str(desc_prof))}\n"
+            f"<b>Ссылки</b>: \n{html.escape(str(links))}\n\n"
         )
+        services = profile.get(UserProfileFields.SERVICES.value, [])
+        if services:
+            moderator_text += "<b>Услуги:</b>\n"
+            for i, s in enumerate(services, 1):
+                moderator_text += f"{i}. <b>{html.escape(str(s.get('name', '')))}</b>\n"
+                moderator_text += f"   <i>Описание</i>: {html.escape(str(s.get('description', '')))}\n"
+                moderator_text += f"   <i>Прайс</i>: {html.escape(str(s.get('price', '')))}\n\n"
+        else:
+            moderator_text += "<b>Услуги отсутствуют.</b>\n"
         try:
             msg_mod = await bot.send_message(
                 chat_id=config.MODERATOR_CONTACT_ID,

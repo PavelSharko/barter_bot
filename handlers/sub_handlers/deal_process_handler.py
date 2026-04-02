@@ -270,16 +270,18 @@ async def handle_deal_process_callbacks(call: CallbackQuery, bot: Bot, state: FS
         provider_name = html.escape(str(provider_name))
 
         # Уведомления
-        provider_msg = f"Вы оказали услугу <b>{service_name}</b> - ваш баланс пополнен на <b>{provider_earnings:g}</b> 🪙"
+        provider_msg = f"Вы оказали услугу <b>{service_name}</b> - ваш баланс пополнен на <b>{provider_earnings:g}</b> 🪙\n\n<b>Плиз, оставьте звезды рейтинга и отзыв заказчику</b>"
         client_msg = f"Вы получили услугу <b>{service_name}</b> - ваш баланс уменьшен на <b>{total_cost:g}</b> 🪙\n(цена услуги: {provider_earnings:g}, сервисный сбор: {server_commission:g}) \n\n <b>Плиз, оставьте звезды рейтинга и отзыв исполнителю</b>"
         mod_msg = f"Произошла сделка между клиентом <b>{client_name}</b> и исполнителем <b>{provider_name}</b> на услугу <b>{service_name}</b> (Сделка: <code>{deal_id}</code>).\nВаша комиссия составила <b>{server_commission:g}</b> 🪙."
 
+
+
         await safe_send_message(bot, chat_id=user_id, text="Сделка успешно завершена!")
-        await safe_send_message(bot, chat_id=provider_id, text=provider_msg, parse_mode="HTML")
+        prov_msg = await safe_send_message(bot, chat_id=provider_id, text=provider_msg, parse_mode="HTML", reply_markup=get_leave_review_keyboard(deal_id))
         await safe_send_message(bot, chat_id=client_id, text=client_msg, parse_mode="HTML", reply_markup=get_leave_review_keyboard(deal_id))
         await safe_send_message(bot, chat_id=config.MODERATOR_CONTACT_ID, text=mod_msg, parse_mode="HTML")
 
-        # add_message(global_msg_fast, user_id, msg)
+        add_message(global_msg_fast, user_id, prov_msg)
         try:
             original_text = call.message.text
             new_text = f"{original_text}\n\n✅ <b>Услуга подтверждена - монеты отправлены </b>"

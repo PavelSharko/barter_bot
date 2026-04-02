@@ -78,5 +78,57 @@ async def extract_and_save_review_text(message: Message, state: FSMContext, user
     
     await message.answer("Отзыв сохранён, спасибо! 🎉 Ты помогаешь сообществу.", reply_markup = get_persistent_main_menu())
 
+    # 5. Уведомление целевому юзеру о тексте отзыва
+    try:
+        from services.users_utils.user_profile_manager import load_profiles
+        from services.users_utils.all_users_manager import load_all_users
+        from entity.Enums_entity import UserProfileFields, UserFields
+        import html
+
+        reviews = load_reviews_locked()
+        review_id = f"{deal_id}_{user_id}"
+        rev_obj = reviews.get(review_id)
+        
+        target_id = None
+        if rev_obj:
+            target_id = rev_obj.get("target_user_id")
+        
+        # Если в объекте нет, падаем на старую логику детекции
+        if not target_id:
+            from services.users_utils.deals_manager import load_deals_locked
+            deals = load_deals_locked()
+            deal = deals.get(deal_id)
+            if deal:
+                client_id = str(deal.get("service_client_id"))
+                provider_id = str(deal.get("service_provider_id"))
+                target_id = provider_id if str(user_id) == client_id else client_id
+                service_name = deal.get("service_name", "услугу")
+        else:
+            from services.users_utils.deals_manager import load_deals_locked
+            deals = load_deals_locked()
+            deal = deals.get(deal_id) or {}
+            service_name = deal.get("service_name", "услугу")
+            
+        if target_id:
+            profiles = load_profiles()
+            users = load_all_users()
+
+            # Кто пишет отзыв?
+            reviewer_profile = profiles.get(user_id) or profiles.get(str(user_id)) or {}
+            reviewer_name = reviewer_profile.get(UserProfileFields.NAME.value)
+            if not reviewer_name:
+                reviewer_data = users.get(user_id) or users.get(str(user_id)) or {}
+                reviewer_name = reviewer_data.get(UserFields.NAME_REAL.value) or reviewer_data.get(UserFields.NAME_TG.value) or f"ID {user_id}"
+
+            from services.state_bot import global_store
+            if global_store.bot:
+                await global_store.bot.send_message(
+                    chat_id=int(target_id),
+                    text=f"📝 Вам оставил текстовый отзыв <b>{html.escape(str(reviewer_name))}</b> за услугу <b>{service_name}</b>:\n\n<i>{text}</i>",
+                    parse_mode="HTML"
+                )
+    except Exception as e:
+        import logging
+        logging.error(f"Ошибка уведомления о тексте отзыва: {e}")
     
     await clear_waiting_input(state, chat_id, user_id)

@@ -57,7 +57,7 @@ def get_menu_keyboard_for_developer() -> InlineKeyboardMarkup:
     )
 
 
-def get_find_service_keyboard() -> InlineKeyboardMarkup:
+def get_find_service_keyboard(user_id: int = None) -> InlineKeyboardMarkup:
     """Создаёт клавиатуру со списком доступных услуг подтвержденных клиентов."""
     from services.users_utils.all_users_manager import load_all_users
     from services.users_utils.user_profile_manager import load_profiles
@@ -72,11 +72,20 @@ def get_find_service_keyboard() -> InlineKeyboardMarkup:
         if u_data.get(UserFields.STATUS.value) == UserLifecycleStatus.CLIENT.value:
             u_profile = profiles.get(u_id) or profiles.get(str(u_id))
             if u_profile:
-                service_name = u_profile.get(UserProfileFields.SERVICE_NAME.value)
-                if service_name:
-                    # Создаём кнопку: текст = service_name, callback_data = FIND_SERVICE_уид
-                    cb_data = f"{MainMenuButtons.FIND_SERVICE.name.lower()}_{u_id}"
-                    keyboard.append([InlineKeyboardButton(text=service_name, callback_data=cb_data)])
+                # Кнопка теперь показывает имя пользователя и его деятельность (PROFESSION)
+                user_name = u_profile.get(UserProfileFields.NAME.value, "Аноним")
+                profession = u_profile.get(UserProfileFields.PROFESSION.value, "")
+                
+                if str(u_id) == str(user_id):
+                    user_name = f"(я) {user_name}"
+                
+                if profession:
+                    button_text = f"{user_name}: {profession}"
+                else:
+                    button_text = user_name
+                
+                cb_data = f"{MainMenuButtons.FIND_SERVICE.name.lower()}_{u_id}"
+                keyboard.append([InlineKeyboardButton(text=button_text, callback_data=cb_data)])
                     
     # Добавляем кнопку Закрыть в конец
     keyboard.append([InlineKeyboardButton(text=CommandsBot.CLOSE.value, callback_data=CommandsBot.CLOSE.value.lower())])
@@ -92,18 +101,24 @@ def get_profile_view_keyboard() -> InlineKeyboardMarkup:
     ])
 
 def get_service_profile_keyboard(target_uid: str) -> InlineKeyboardMarkup:
-    """Создает клавиатуру профиля чужой услуги (Отзывы + Создать сделку + Назад)."""
+    """Создает клавиатуру профиля чужой услуги (Отзывы + Выбрать услугу + Назад)."""
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=MainMenuButtons.REVIEWS.value, callback_data=f"{MainMenuButtons.REVIEWS.name.lower()}_{target_uid}")],
-        [InlineKeyboardButton(text=MainMenuButtons.CREATE_DEAL.value, callback_data=f"{MainMenuButtons.CREATE_DEAL.name.lower()}_{target_uid}")],
+        [InlineKeyboardButton(text=MainMenuButtons.CHOOSE_DEAL.value, callback_data=f"{MainMenuButtons.CHOOSE_DEAL.name.lower()}_{target_uid}")],
         [InlineKeyboardButton(text=MainMenuButtons.BACK_TO_SERVICES.value, callback_data=MainMenuButtons.BACK_TO_SERVICES.name.lower())],
         [InlineKeyboardButton(text=CommandsBot.CLOSE.value, callback_data=CommandsBot.CLOSE.value.lower())]
     ])
 
-def get_accept_terms_keyboard(provider_uid: str) -> InlineKeyboardMarkup:
+def get_create_deal_for_service_keyboard(target_uid: str, service_idx: int) -> InlineKeyboardMarkup:
+    """Создает клавиатуру для заказа конкретной услуги."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=MainMenuButtons.CREATE_DEAL.value, callback_data=f"{MainMenuButtons.CREATE_DEAL.name.lower()}_{target_uid}_{service_idx}")]
+    ])
+
+def get_accept_terms_keyboard(provider_uid: str, service_idx: int) -> InlineKeyboardMarkup:
     """Создает клавиатуру для принятия условий сделки."""
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text=MainMenuButtons.ACCEPT_TERMS.value, callback_data=f"{MainMenuButtons.ACCEPT_TERMS.name.lower()}_{provider_uid}")],
+        [InlineKeyboardButton(text=MainMenuButtons.ACCEPT_TERMS.value, callback_data=f"{MainMenuButtons.ACCEPT_TERMS.name.lower()}_{provider_uid}_{service_idx}")],
         [InlineKeyboardButton(text=CommandsBot.CLOSE.value, callback_data=CommandsBot.CLOSE.value.lower())]
     ])
 

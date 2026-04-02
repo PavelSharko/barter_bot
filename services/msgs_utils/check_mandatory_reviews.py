@@ -36,7 +36,7 @@ async def check_and_enforce_unreviewed_deals(user_id: int, bot, call_or_msg, is_
         if current_data == ReviewProcessButtons.ADD_TEXT_REVIEW.name.lower():
             return False
 
-    text = f"⚠️ Вы еще не оставили отзыв на завершенную сделку по услуге: **{service_name}**.\n\nЧтобы продолжить работу с ботом, пожалуйста, оцените её:"
+    text = f"⚠️ Вы еще не оставили отзыв на завершенную сделку по услуге: **{service_name}**.\n\nЧтобы продолжить работу с ботом, пожалуйста, оцените работу другого участника:"
     await clear_messages(user_id, global_msg_fast)
     
     if is_callback:

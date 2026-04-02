@@ -81,9 +81,10 @@ class Sity(str, Enum):
 class UserProfileFields(str, Enum):
     NAME = "name"
     AREA = "area"
-    SERVICE_NAME = "service_name"
-    SERVICE_DESCRIPTION = "service_description"
-    PRICE_INFO = "price_info"
+    PROFESSION = "profession"
+    DESCRIPTION_PROFESSION = "description_profession"
+    SERVICES = "services"
+    TEMP_SERVICE = "temp_service"
     SOCIAL_LINKS = "social_links"
     CURRENT_STEP = "current_step"
     CREATED_AT = "created_at"
