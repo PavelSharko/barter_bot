@@ -62,9 +62,9 @@ async def create_or_update_profile(user_id: int, updates: dict) -> bool:
             # Создание нового профиля
             profiles[user_id] = {
                 UserProfileFields.AREA.value: None,
-                UserProfileFields.SERVICE_NAME.value: None,
-                UserProfileFields.SERVICE_DESCRIPTION.value: None,
-                UserProfileFields.PRICE_INFO.value: None,
+                UserProfileFields.DESCRIPTION_PROFESSION.value: None,
+                UserProfileFields.SERVICES.value: [],
+                UserProfileFields.TEMP_SERVICE.value: {},
                 UserProfileFields.SOCIAL_LINKS.value: [],
                 UserProfileFields.CURRENT_STEP.value: 0,
                 UserProfileFields.CREATED_AT.value: current_time,
@@ -105,9 +105,8 @@ def is_profile_completed(user_id: int) -> bool:
     required_fields = [
         UserProfileFields.NAME.value,
         UserProfileFields.AREA.value,
-        UserProfileFields.SERVICE_NAME.value,
-        UserProfileFields.SERVICE_DESCRIPTION.value,
-        UserProfileFields.PRICE_INFO.value,
+        UserProfileFields.DESCRIPTION_PROFESSION.value,
+        UserProfileFields.SERVICES.value,
         UserProfileFields.SOCIAL_LINKS.value
     ]
     

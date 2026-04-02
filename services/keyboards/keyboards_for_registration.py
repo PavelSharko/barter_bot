@@ -47,8 +47,8 @@ def get_area_keyboard() -> InlineKeyboardMarkup:
 def get_product_name_keyboard() -> InlineKeyboardMarkup:
     keyboard = [[
         InlineKeyboardButton(
-            text=ProfileRegistration_Menu.ENTER_NAME_PRODUCT.value,
-            callback_data=ProfileRegistration_Menu.ENTER_NAME_PRODUCT.name.lower()
+            text=ProfileRegistration_Menu.ENTER_NAME_PROFESSION.value,
+            callback_data=ProfileRegistration_Menu.ENTER_NAME_PROFESSION.name.lower()
         )
     ]]
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
@@ -57,20 +57,71 @@ def get_product_name_keyboard() -> InlineKeyboardMarkup:
 def get_product_desc_keyboard() -> InlineKeyboardMarkup:
     keyboard = [[
         InlineKeyboardButton(
-            text=ProfileRegistration_Menu.ENTER_FULL_INFO_PRODUCT.value,
-            callback_data=ProfileRegistration_Menu.ENTER_FULL_INFO_PRODUCT.name.lower()
+            text=ProfileRegistration_Menu.ENTER_FULL_INFO_PROFESSION.value,
+            callback_data=ProfileRegistration_Menu.ENTER_FULL_INFO_PROFESSION.name.lower()
         )
     ]]
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 
-def get_price_keyboard() -> InlineKeyboardMarkup:
-    keyboard = [[
+def get_add_service_keyboard(is_first: bool = True) -> InlineKeyboardMarkup:
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                text=ProfileRegistration_Menu.ADD_NAME_PRODUCT.value,
+                callback_data=ProfileRegistration_Menu.ADD_NAME_PRODUCT.name.lower()
+            )
+        ]
+    ]
+    if not is_first:
+        keyboard.append([
+            InlineKeyboardButton(
+                text=ProfileRegistration_Menu.ALL_SERVICES_FILLED.value,
+                callback_data=ProfileRegistration_Menu.ALL_SERVICES_FILLED.name.lower()
+            )
+        ])
+    keyboard.append([
         InlineKeyboardButton(
-            text=ProfileRegistration_Menu.ENTER_PRICE.value,
-            callback_data=ProfileRegistration_Menu.ENTER_PRICE.name.lower()
+            text=ProfileRegistration_Menu.RESTART_PROFILE.value,
+            callback_data=ProfileRegistration_Menu.RESTART_PROFILE.name.lower()
         )
-    ]]
+    ])
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+
+def get_add_info_product_keyboard() -> InlineKeyboardMarkup:
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                text=ProfileRegistration_Menu.ADD_INFO_PRODUCT.value,
+                callback_data=ProfileRegistration_Menu.ADD_INFO_PRODUCT.name.lower()
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=ProfileRegistration_Menu.RESTART_PROFILE.value,
+                callback_data=ProfileRegistration_Menu.RESTART_PROFILE.name.lower()
+            )
+        ]
+    ]
+    return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+
+def get_price_keyboard() -> InlineKeyboardMarkup:
+    keyboard = [
+        [
+            InlineKeyboardButton(
+                text=ProfileRegistration_Menu.ENTER_PRICE.value,
+                callback_data=ProfileRegistration_Menu.ENTER_PRICE.name.lower()
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=ProfileRegistration_Menu.RESTART_PROFILE.value,
+                callback_data=ProfileRegistration_Menu.RESTART_PROFILE.name.lower()
+            )
+        ]
+    ]
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
 
 

@@ -44,16 +44,25 @@ def save_deals_locked(deals_data: dict[str, dict]):
         DEALS_LIST = deals_data
         save_deals()
 
-def has_unreviewed_finished_deals(client_id: int) -> Optional[Tuple[str, str]]:
+def has_unreviewed_finished_deals(user_id: int) -> Optional[Tuple[str, str]]:
     """
-    Проверяет, есть ли у пользователя (как клиента) завершенные сделки,
-    на которые он еще не оставил отзыв.
-    Возвращает (ID сделки, название услуги), если такая найдена, иначе None.
+    Проверяет, есть ли у пользователя (как клиента ИЛИ как исполнителя) 
+    завершенные сделки, на которые он еще не оставил отзыв.
+    Мы идем по всем сделкам и проверяем наличие записи в reviews.json
     """
+    from services.users_utils.reviews_manager import load_reviews_locked
     deals = load_deals_locked()
+    reviews = load_reviews_locked()
+    
     for deal_id, deal in deals.items():
-        if deal.get("status_deal") == "finished" and \
-           deal.get("review_already_left") is False and \
-           str(deal.get("service_client_id")) == str(client_id):
-            return str(deal_id), str(deal.get(DealFields.SERVICE_NAME.value, 'Без названия'))
+        if deal.get("status_deal") == "finished":
+            # Уникальный ID отзыва для этого юзера в этой сделке
+            review_key = f"{deal_id}_{user_id}"
+            
+            # Проверяем, участвовал ли юзер в сделке
+            is_client = str(deal.get("service_client_id")) == str(user_id)
+            is_provider = str(deal.get("service_provider_id")) == str(user_id)
+            
+            if (is_client or is_provider) and review_key not in reviews:
+                return str(deal_id), str(deal.get(DealFields.SERVICE_NAME.value, 'Без названия'))
     return None

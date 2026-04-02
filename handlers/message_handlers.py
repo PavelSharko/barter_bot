@@ -19,7 +19,7 @@ from services.comands.developer_commands.standart_comands import save_actual_dat
 from services.comands.users_commands.for_contacted.contacted_menu_inline_handler import \
     handle_profile_registration_callbacks
 from services.comands.users_commands.for_contacted.to_set_profile_commands import extract_and_save_full_name_from_msg, \
-    extract_and_save_area, extract_and_save_product_name, extract_and_save_description, extract_and_save_price, \
+    extract_and_save_area, extract_and_save_profession, extract_and_save_service_name, extract_and_save_service_desc, extract_and_save_description, extract_and_save_price, \
     extract_and_save_socials
 from services.comands.users_commands.edit_profile_commands import extract_and_update_name, extract_and_update_area, \
     extract_and_update_product_name, extract_and_update_description, extract_and_update_price
@@ -101,10 +101,16 @@ def register_handlers(dp, bot):
         elif current_command == ProfileRegistration_Menu.ENTER_AREA.value.lower():
             await extract_and_save_area(message, state, user_id)
 
-        elif current_command == ProfileRegistration_Menu.ENTER_NAME_PRODUCT.value.lower():
-            await extract_and_save_product_name(message, state, user_id)
+        elif current_command == ProfileRegistration_Menu.ADD_NAME_PRODUCT.value.lower():
+            await extract_and_save_service_name(message, state, user_id)
 
-        elif current_command == ProfileRegistration_Menu.ENTER_FULL_INFO_PRODUCT.value.lower():
+        elif current_command == ProfileRegistration_Menu.ADD_INFO_PRODUCT.value.lower():
+            await extract_and_save_service_desc(message, state, user_id)
+
+        elif current_command == ProfileRegistration_Menu.ENTER_NAME_PROFESSION.value.lower():
+            await extract_and_save_profession(message, state, user_id)
+
+        elif current_command == ProfileRegistration_Menu.ENTER_FULL_INFO_PROFESSION.value.lower():
             await extract_and_save_description(message, state, user_id)
 
         elif current_command == ProfileRegistration_Menu.ENTER_PRICE.value.lower():
@@ -205,6 +211,7 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
             call.data in [item.name.lower() for item in MainMenuButtons] or
             call.data.startswith(f"{MainMenuButtons.FIND_SERVICE.name.lower()}_") or
             call.data.startswith(f"{MainMenuButtons.REVIEWS.name.lower()}_") or
+            call.data.startswith(f"{MainMenuButtons.CHOOSE_DEAL.name.lower()}_") or
             call.data.startswith(f"{MainMenuButtons.CREATE_DEAL.name.lower()}_") or
             call.data.startswith(f"{MainMenuButtons.ACCEPT_TERMS.name.lower()}_") or
             call.data.startswith(f"{MainMenuButtons.ACCEPT_REQUEST.name.lower()}_") or

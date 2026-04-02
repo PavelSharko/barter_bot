@@ -7,7 +7,7 @@ import html
 
 from filelock import FileLock
 from initApp.config_loader import config
-from services.keyboards.bot_all_buttons import MainMenuButtons
+from services.keyboards.bot_all_buttons import MainMenuButtons, DealProcessButtons
 from services.keyboards.creator_persistent_keyboards import get_persistent_main_menu
 from services.msgs_utils.deleter_messages import clear_messages
 from services.state_bot.global_store import global_msg_fast, add_message
@@ -47,10 +47,18 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             f"👤 **Ваш профиль:**\n\n"
             f"**Имя:** {user_profile.get(UserProfileFields.NAME.value, 'Не указано')}\n"
             f"**Район:** {user_profile.get(UserProfileFields.AREA.value, 'Не указано')}\n"
-            f"**Услуга/Товар:** {user_profile.get(UserProfileFields.SERVICE_NAME.value, 'Не указано')}\n"
-            f"**Описание:** {user_profile.get(UserProfileFields.SERVICE_DESCRIPTION.value, 'Не указано')}\n"
-            f"**Прайс:** {user_profile.get(UserProfileFields.PRICE_INFO.value, 'Не указано')}\n"
+            f"**О себе:** {user_profile.get(UserProfileFields.DESCRIPTION_PROFESSION.value, 'Не указано')}\n\n"
         )
+        
+        services = user_profile.get(UserProfileFields.SERVICES.value, [])
+        if services:
+            text += "**Ваши услуги:**\n"
+            for i, s in enumerate(services, 1):
+                text += f"{i}. **{s.get('name', 'Услуга')}**\n"
+                text += f"   Описание: {s.get('description', '')}\n"
+                text += f"   Прайс: {s.get('price', '')}\n\n"
+        else:
+            text += "**Услуги отсутствуют.**\n"
         
         msg = await call.message.answer(
             text,
@@ -135,6 +143,9 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             DealStatus.CANCELLED.value: "🔴 Отменена"
         }
         
+        profiles = load_profiles()
+        users = load_all_users()
+        
         chunks = [user_deals[i:i + 3] for i in range(0, len(user_deals), 3)]
         
         for i, chunk in enumerate(chunks):
@@ -147,17 +158,36 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
                 created_at = deal.get(DealFields.CREATED_AT.value, "Неизвестно")
                 
                 s_client = str(deal.get(DealFields.SERVICE_CLIENT_ID.value, ""))
+                s_provider = str(deal.get(DealFields.SERVICE_PROVIDER_ID.value, ""))
+                
+                # Получаем имя и профессию другой стороны
                 if str_user_id == s_client:
-                    role_str = "заказчик"
+                    role_suffix = " &lt;- вы были заказчик"
+                    other_id = s_provider
+                    other_role_title = "Исполнитель"
                 else:
-                    role_str = "исполнитель"
-                    
+                    role_suffix = " &lt;- заказали у вас"
+                    other_id = s_client
+                    other_role_title = "Заказчик"
+                
+                other_id_int = int(other_id) if str(other_id).isdigit() else other_id
+                other_profile = profiles.get(other_id) or profiles.get(str(other_id)) or profiles.get(other_id_int) or {}
+                other_name = other_profile.get(UserProfileFields.NAME.value)
+                if not other_name:
+                    other_data = users.get(other_id_int) or users.get(str(other_id)) or {}
+                    other_name = other_data.get(UserFields.NAME_REAL.value) or other_data.get(UserFields.NAME_TG.value) or f"ID {other_id}"
+                
+                display_name = other_name
+
+                created_at_short = created_at.split(" ")[0] if " " in created_at else created_at
+
                 text = (
-                    f"<b>Название услуги:</b> <u>{service_name}</u>\n"
-                    f"Вы в качестве: <i>{role_str}</i>\n"
-                    f"<b>Статус сделки:</b> {status_ru}\n"
-                    f"<b>Стоимость услуги:</b> {price} 🪙\n"
-                    f"<b>Дата:</b> {created_at}\n"
+                    f"<b>ID Сделки:</b> <code>{d_id}</code>\n"
+                    f"<b>Услуга:</b> {service_name}{role_suffix}\n"
+                    f"<b>Сумма:</b> {price:g}\n"
+                    f"<b>{other_role_title}:</b> {html.escape(str(display_name))}\n"
+                    f"<b>Статус:</b> {status_ru}\n"
+                    f"<b>Дата:</b> {created_at_short}\n"
                 )
                 response_texts.append(text)
                 
@@ -179,7 +209,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         
         msg = await call.message.answer(
             "Вот кто сейчас есть на острове 🌴", 
-            reply_markup=get_find_service_keyboard()
+            reply_markup=get_find_service_keyboard(user_id)
         )
         add_message(global_msg_fast, user_id, msg)
         return
@@ -203,13 +233,21 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
              return
              
         text = (
-            f"👤 <b>Профиль услуги:</b>\n\n"
+            f"👤 <b>Профиль участника:</b>\n\n"
             f"<b>Имя:</b> {html.escape(str(target_profile.get(UserProfileFields.NAME.value, 'Не указано')))}\n"
             f"<b>Район:</b> {html.escape(str(target_profile.get(UserProfileFields.AREA.value, 'Не указано')))}\n"
-            f"<b>Услуга/Товар:</b> {html.escape(str(target_profile.get(UserProfileFields.SERVICE_NAME.value, 'Не указано')))}\n"
-            f"<b>Описание:</b> {html.escape(str(target_profile.get(UserProfileFields.SERVICE_DESCRIPTION.value, 'Не указано')))}\n"
-            f"<b>Прайс:</b> {html.escape(str(target_profile.get(UserProfileFields.PRICE_INFO.value, 'Не указано')))}\n"
+            f"<b>Деятельность:</b> {html.escape(str(target_profile.get(UserProfileFields.PROFESSION.value, 'Не указано')))}\n"
+            f"<b>О себе:</b> {html.escape(str(target_profile.get(UserProfileFields.DESCRIPTION_PROFESSION.value, 'Не указано')))}\n\n"
         )
+        
+        services = target_profile.get(UserProfileFields.SERVICES.value, [])
+        if services:
+            text += "<b>Услуги:</b>\n"
+            for i, s in enumerate(services, 1):
+                text += f"{i}. <b>{html.escape(str(s.get('name', 'Услуга')))}</b>\n"
+                text += f"   <i>Прайс</i>: {html.escape(str(s.get('price', '')))}\n\n"
+        else:
+            text += "<b>Услуги отсутствуют.</b>\n"
             
         msg = await call.message.answer(
             text,
@@ -233,7 +271,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         try:
             reviews_db = load_reviews_locked()
             for r_id, r_data in reviews_db.items():
-                if r_id.endswith(f"_{target_id_str}"):
+                if str(r_data.get("target_user_id")) == str(target_id_str):
                     target_reviews.append(r_data)
         except Exception as e:
             msg = await call.message.answer("⚠️ Не получилось загрузить отзывы. Попробуй чуть позже!")
@@ -262,12 +300,36 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             stars_str = "⭐" * stars_num + "⚫️" * (5 - stars_num)
             
             role = r.get("role_in_deal", "unknown")
-            role_ru = "Исполнитель" if role == "provider" else "Заказчик" if role == "client" else role
+            # Инвертируем: если автор отзыва был provider, значит владелец профиля (цель) был client
+            role_ru = "Заказчик" if role == "provider" else "Исполнитель" if role == "client" else role
             
             text_review = r.get("text", "Без текста")
-            created_at = r.get("created_at", "Неизвестна")
+            created_at_raw = r.get("created_at", "Неизвестна")
+            # Оставляем только дату без времени
+            created_at = created_at_raw.split(" ")[0] if " " in created_at_raw else created_at_raw
             
+            deal_id = r.get("deal_id")
+            deals = load_deals_locked()
+            deal = deals.get(deal_id) or {}
+            service_name = deal.get(DealFields.SERVICE_NAME.value, "услуга")
+            
+            # Определяем, кто оставил отзыв
+            reviewer_id = r.get("reviewer_id")
+            if not reviewer_id:
+                reviewer_id = r.get("review_id", "").split("_")[-1]
+                
+            profiles = load_profiles()
+            users = load_all_users()
+            rev_id_int = int(reviewer_id) if str(reviewer_id).isdigit() else reviewer_id
+            reviewer_profile = profiles.get(reviewer_id) or profiles.get(str(reviewer_id)) or profiles.get(rev_id_int) or {}
+            reviewer_name = reviewer_profile.get(UserProfileFields.NAME.value)
+            if not reviewer_name:
+                reviewer_data = users.get(rev_id_int) or users.get(str(reviewer_id)) or {}
+                reviewer_name = reviewer_data.get(UserFields.NAME_REAL.value) or reviewer_data.get(UserFields.NAME_TG.value) or f"ID {reviewer_id}"
+
             formatted_text = (
+                f"👤 <b>От:</b> {html.escape(str(reviewer_name))}\n"
+                f"<b>Услуга:</b> {html.escape(str(service_name))}\n"
                 f"<b>Роль в сделке:</b> {role_ru}\n"
                 f"<b>Оценка:</b> {stars_str}\n"
                 f"<b>Дата:</b> {created_at}\n\n"
@@ -286,8 +348,8 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             
         return
 
-    # 5.3 Создание сделки с чужим профилем -> Выдача условий
-    elif data.startswith(f"{MainMenuButtons.CREATE_DEAL.name.lower()}_"):
+    # 5.X Вывод списка услуг для выбора (CHOOSE_DEAL)
+    elif data.startswith(f"{MainMenuButtons.CHOOSE_DEAL.name.lower()}_"):
         await call.answer()
         try:
             _, target_id_str = data.rsplit('_', 1)
@@ -302,10 +364,69 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             )
             add_message(global_msg_fast, user_id, msg)
             return
+
+        profiles = load_profiles()
+        target_profile = profiles.get(target_id) or profiles.get(str(target_id))
+        
+        if not target_profile:
+            msg = await call.message.answer("⚠️ Анкета не найдена.")
+            add_message(global_msg_fast, user_id, msg)
+            return
+            
+        services = target_profile.get(UserProfileFields.SERVICES.value, [])
+        if not services:
+            msg = await call.message.answer("К сожалению, у этого пользователя пока нет добавленных услуг.", reply_markup=get_inline_keyboard_close())
+            add_message(global_msg_fast, user_id, msg)
+            return
+            
+        from services.keyboards.creator_inline_keyboards import get_create_deal_for_service_keyboard
+        
+        for idx, s in enumerate(services):
+            service_text = (
+                f"<b>Услуга: {html.escape(str(s.get('name', 'Услуга')))}</b>\n\n"
+                f"{html.escape(str(s.get('description', 'Без описания')))}\n"
+                f"==================================\n"
+                f"Прайс: {html.escape(str(s.get('price', '0')))} 🪙"
+            )
+            msg = await call.message.answer(
+                service_text,
+                reply_markup=get_create_deal_for_service_keyboard(target_id_str, idx),
+                parse_mode="HTML"
+            )
+            add_message(global_msg_fast, user_id, msg)
+            
+        target_name = target_profile.get(UserProfileFields.NAME.value, "этого пользователя")
+        final_msg = await call.message.answer(
+            f"Это пока все услуги {html.escape(str(target_name))}",
+            reply_markup=get_inline_keyboard_close(),
+            parse_mode="HTML"
+        )
+        add_message(global_msg_fast, user_id, final_msg)
+        return
+
+    # 5.3 Создание сделки с чужим профилем -> Выдача условий
+    elif data.startswith(f"{MainMenuButtons.CREATE_DEAL.name.lower()}_"):
+        await call.answer()
+        try:
+            parts = data.split('_')
+            target_id_str = parts[2]
+            service_idx_str = parts[3]
+            target_id = int(target_id_str)
+            service_idx = int(service_idx_str)
+        except Exception:
+            return
+            
+        if user_id == target_id:
+            msg = await call.message.answer(
+                "У себя не заказывают 😄 Выбери кого-нибудь из участников клуба!",
+                reply_markup=get_inline_keyboard_close()
+            )
+            add_message(global_msg_fast, user_id, msg)
+            return
             
         msg = await call.message.answer(
             "Ты принимаешь условия оказания и отмены этой услуги? 🤝",
-            reply_markup=get_accept_terms_keyboard(target_id_str)
+            reply_markup=get_accept_terms_keyboard(target_id_str, service_idx)
         )
         add_message(global_msg_fast, user_id, msg)
         return
@@ -314,8 +435,11 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
     elif data.startswith(f"{MainMenuButtons.ACCEPT_TERMS.name.lower()}_"):
         await call.answer()
         try:
-            _, provider_id_str = data.rsplit('_', 1)
+            parts = data.split('_')
+            provider_id_str = parts[2]
+            service_idx_str = parts[3]
             provider_id = int(provider_id_str)
+            service_idx = int(service_idx_str)
         except Exception:
             return
             
@@ -349,9 +473,13 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
                 return
                 
             try:
-                price = float(provider_profile.get(UserProfileFields.PRICE_INFO.value, 0))
+                services = provider_profile.get(UserProfileFields.SERVICES.value, [])
+                target_service = services[service_idx] if service_idx < len(services) else {}
+                price = float(target_service.get("price", 0))
+                service_custom_name = target_service.get("name", "Не указано")
             except ValueError:
                 price = 0.0
+                service_custom_name = "Не указано"
                 
             
             required_amount = round(price * 1.1, 2)
@@ -400,7 +528,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             DealFields.UPDATED_AT.value: current_time,
             DealFields.SERVICE_PROVIDER_ID.value: provider_id,
             DealFields.SERVICE_CLIENT_ID.value: user_id,
-            DealFields.SERVICE_NAME.value: provider_profile.get(UserProfileFields.SERVICE_NAME.value, "Не указано"),
+            DealFields.SERVICE_NAME.value: service_custom_name,
             DealFields.PRICE_IN_COINS.value: price,
             DealFields.STATUS_DEAL.value: DealStatus.PENDING_CONFIRMATION.value,
             DealFields.DATA_CONFIRMED_AT.value: None,
@@ -503,14 +631,24 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             role_text = "Исполнитель:" if is_client else "Клиент:"
             clean_name = html.escape(str(other_user_name))
             
+            warnings = ""
+            if is_client:
+                warnings = (
+                    # f"!учтите что если испольнитель принял ваш запрос то чтобы \"{DealProcessButtons.CANCEL_DEAL}\" - потребуется его подтверждение\n\n"
+                    f"!Важно - не нажимайте {DealProcessButtons.SERVICE_DONE} - пока вы не получили услугу - потому что монеты у вас будут сразу списаны"
+                )
+            else:
+                warnings = (
+                    f"!Важно - не нажимайте {DealProcessButtons.CANCEL_DEAL} - если вы уже оказали услугу - потому что монеты вернуться заказчику при отмене"
+                )
+
             return (
                 f"ID Сделки: <code>{deal_id}</code>\n"
                 f"Услуга: <b>{service}</b>\n"
                 f"Сумма: <b>{price:g}</b>\n"
                 f"{role_text} <b>{clean_name}</b>\n"
                 f"Статус: {status_ru}\n\n"
-                f""
-                f"!Важно - не нажимайте ✅Услуга оказана - пока вы не получили услугу - потому что монеты у вас будут сразу списаны"
+                f"{warnings}"
             )
 
         from services.keyboards.creator_inline_keyboards import get_client_deal_keyboard, get_provider_deal_keyboard
@@ -584,11 +722,19 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         deals = load_deals_locked()
         deal = deals.get(deal_id)
         if not deal:
+            try:
+                await call.message.edit_reply_markup(reply_markup=None)
+            except Exception:
+                pass
             await bot.send_message(chat_id=user_id, text="❌ Сделка не найдена — возможно, она уже устарела.")
             await call.answer()
             return
             
         if deal.get(DealFields.STATUS_DEAL.value) != DealStatus.PENDING_CONFIRMATION.value:
+            try:
+                await call.message.edit_reply_markup(reply_markup=None)
+            except Exception:
+                pass
             await bot.send_message(chat_id=user_id, text="Заявка уже обработана")
             await call.answer()
             return
@@ -657,11 +803,19 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         deals = load_deals_locked()
         deal = deals.get(deal_id)
         if not deal:
+            try:
+                await call.message.edit_reply_markup(reply_markup=None)
+            except Exception:
+                pass
             await bot.send_message(chat_id=user_id, text="❌ Сделка не найдена — возможно, она уже устарела.")
             await call.answer()
             return
 
         if deal.get(DealFields.STATUS_DEAL.value) != DealStatus.PENDING_CONFIRMATION.value:
+            try:
+                await call.message.edit_reply_markup(reply_markup=None)
+            except Exception:
+                pass
             await bot.send_message(chat_id=user_id, text="Заявка уже обработана")
             await call.answer()
             return

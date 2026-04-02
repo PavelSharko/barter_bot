@@ -48,8 +48,9 @@ class MainMenuButtons(str, Enum):
     CONFIRM_DEAL = "Активные сделки ✅"
     SUPPORT = "Поддержка 🆘"
     REVIEWS = "отзывы"
-    CREATE_DEAL = "создать сделку"
-    BACK_TO_SERVICES = "назад к услугам"
+    CHOOSE_DEAL = "Выбрать услугу"
+    CREATE_DEAL = "заказать"
+    BACK_TO_SERVICES = "назад к другим"
     ACCEPT_TERMS = "принимаю условия"
     ACCEPT_REQUEST = "принять запрос"
     REJECT_REQUEST = "отклонить запрос"
@@ -104,12 +105,16 @@ class REJECTED_Menu(str, Enum):
 class ProfileRegistration_Menu(str, Enum):
     ENTER_NAME = "Ввести ФИО"
     ENTER_AREA = "Указать район"
-    ENTER_NAME_PRODUCT = "Указать товар / услугу"
-    ENTER_FULL_INFO_PRODUCT = "описать услугу"
+    ENTER_NAME_PROFESSION = "Указать деятельность"
+    ENTER_FULL_INFO_PROFESSION = "описать деятельность"
+    ADD_NAME_PRODUCT = "добавить услугу"
+    ADD_INFO_PRODUCT = "описать детали услуги"
+    ALL_SERVICES_FILLED = "все услуги запонены"
+
     ENTER_PRICE = "Указать прайс"
     ENTER_SOCIALS = "Указать ссылки и отзывы"
     FINAL_PROFILE_VIEW = "Посмотреть анкету"
-    RESTART_PROFILE = "заполнить заново" # Для просмотра готовой анкеты
+    RESTART_PROFILE = "заполнить заново анкету" # Для просмотра готовой анкеты
     SEND_TO_REVIEW = "Отправить на проверку"
     ACCEPT = "принять"
     REJECT = "отклонить"

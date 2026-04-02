@@ -44,8 +44,8 @@ async def extract_and_update_name(message, state, user_id):
         return
 
     # Валидация ФИО
-    if not (2 <= len(text) <= 100):
-        await send_error(message, user_id, "Ошибка: имя должно быть от 2 до 100 символов")
+    if not (2 <= len(text) <= 50):
+        await send_error(message, user_id, "Ошибка: имя должно быть от 2 до 50 символов")
         return
     
     if not re.match(r"^[a-zA-Zа-яА-ЯёЁ\s\-]+$", text):
@@ -99,34 +99,8 @@ async def extract_and_update_area(message, state, user_id):
 
 
 async def extract_and_update_product_name(message, state, user_id):
-    text = (message.text or "").strip()
-    if await check_cancel_input(text, message, state):
-        # 2. Сообщение "Что нужно отредактировать" с inline клавиатурой (в fast)
-        msg_menu = await message.answer(
-            "что нужно отредактировать?",
-            reply_markup=get_edit_profile_menu_keyboard(user_id)
-        )
-        add_message(global_msg_fast, user_id, msg_menu)
-        return
-
-    # Валидация Услуги
-    if not (3 <= len(text) <= 30):
-        await send_error(message, user_id, "Ошибка: название услуги должно быть от 3 до 30 символов")
-        return
-
-    if not re.match(r"^[a-zA-Zа-яА-ЯёЁ\s\-\./]+$", text):
-        await send_error(message, user_id, "Ошибка: недопустимые символы в названии услуги")
-        return
-
-    await create_or_update_profile(user_id, {
-        UserProfileFields.SERVICE_NAME.value: text
-    })
-    update_user_field(user_id, UserFlags.CHANGES_PROFILE_CONFIRMED.value, ChangesProfileStatus.PENDING_CHANGES.value)
-
-    await clear_messages(user_id, global_msg_fast)
-    await clear_waiting_input(state, message.chat.id, user_id)
-
-    await send_after_edit_messages(message, user_id, f"✅ Название услуги изменено на: {text}")
+    # Устарело, услуги теперь списком. Ожидает рефакторинга.
+    pass
 
 
 async def extract_and_update_description(message, state, user_id):
@@ -141,53 +115,23 @@ async def extract_and_update_description(message, state, user_id):
         return
     
     # Валидация Описания
-    if not (100 <= len(text) <= 500):
-        await send_error(message, user_id, f"Ошибка: описание должно быть от 100 до 500 символов (сейчас {len(text)})")
+    if not (50 <= len(text) <= 300):
+        await send_error(message, user_id, f"Ошибка: описание должно быть от 50 до 300 символов (сейчас {len(text)})")
         return
 
-    if re.search(r"[\U00010000-\U0010ffff]", text):
-         await send_error(message, user_id, "Ошибка: использование эмодзи в описании запрещено")
-         return
-
+    # Валидация на Эмодзи удалена по просьбе пользователя
+    
     await create_or_update_profile(user_id, {
-        UserProfileFields.SERVICE_DESCRIPTION.value: text
+        UserProfileFields.DESCRIPTION_PROFESSION.value: text
     })
     update_user_field(user_id, UserFlags.CHANGES_PROFILE_CONFIRMED.value, ChangesProfileStatus.PENDING_CHANGES.value)
 
     await clear_messages(user_id, global_msg_fast)
     await clear_waiting_input(state, message.chat.id, user_id)
 
-    await send_after_edit_messages(message, user_id, "✅ Описание услуги обновлено.")
+    await send_after_edit_messages(message, user_id, "✅ Описание о себе обновлено.")
 
 
 async def extract_and_update_price(message, state, user_id):
-    text = (message.text or "").strip()
-    if await check_cancel_input(text, message, state):
-               
-        # 2. Сообщение "Что нужно отредактировать" с inline клавиатурой (в fast)
-        msg_menu = await message.answer(
-            "что нужно отредактировать?",
-            reply_markup=get_edit_profile_menu_keyboard(user_id)
-        )
-        add_message(global_msg_fast, user_id, msg_menu)
-        return
-
-    # Валидация Прайса
-    if not text.isdigit():
-        await send_error(message, user_id, "Ошибка: цена должна быть целым числом")
-        return
-        
-    price_val = int(text)
-    if not (1 <= price_val <= 99):
-        await send_error(message, user_id, "Ошибка: цена должна быть от 1 до 99")
-        return
-
-    await create_or_update_profile(user_id, {
-        UserProfileFields.PRICE_INFO.value: text
-    })
-    update_user_field(user_id, UserFlags.CHANGES_PROFILE_CONFIRMED.value, ChangesProfileStatus.PENDING_CHANGES.value)
-
-    await clear_messages(user_id, global_msg_fast)
-    await clear_waiting_input(state, message.chat.id, user_id)
-
-    await send_after_edit_messages(message, user_id, f"✅ Прайс изменен на: {text}")
+    # Устарело, услуги теперь списком. Ожидает рефакторинга.
+    pass

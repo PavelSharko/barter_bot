@@ -46,9 +46,9 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
         add_message(global_msg_contacted_fast, user_id, msg)
         return
 
-    if call.data == ProfileRegistration_Menu.ENTER_NAME_PRODUCT.name.lower():
+    if call.data == ProfileRegistration_Menu.ENTER_NAME_PROFESSION.name.lower():
         await call.answer(text="Указываем товар/услугу 🛒", show_alert=False)
-        command_name = ProfileRegistration_Menu.ENTER_NAME_PRODUCT.value.lower()
+        command_name = ProfileRegistration_Menu.ENTER_NAME_PROFESSION.value.lower()
         await set_waiting_input(state, bot, chat_id, user_id, command_name, timeout=time_for_input_words)
         msg = await bot.send_message(
             chat_id=chat_id,
@@ -57,13 +57,53 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
         add_message(global_msg_contacted_fast, user_id, msg)
         return
 
-    if call.data == ProfileRegistration_Menu.ENTER_FULL_INFO_PRODUCT.name.lower():
-        await call.answer(text="Описываем услугу 📝", show_alert=False)
-        command_name = ProfileRegistration_Menu.ENTER_FULL_INFO_PRODUCT.value.lower()
+    if call.data == ProfileRegistration_Menu.ENTER_FULL_INFO_PROFESSION.name.lower():
+        await call.answer(text="Описываем деятельность 📝", show_alert=False)
+        command_name = ProfileRegistration_Menu.ENTER_FULL_INFO_PROFESSION.value.lower()
         await set_waiting_input(state, bot, chat_id, user_id, command_name, timeout=time_for_input_words)
         msg = await bot.send_message(
             chat_id=chat_id,
-            text=info_about_product
+            text=(
+                "📝 Расскажите о себе и своей деятельности (от 50 до 300 символов) — эту информацию увидят другие участники клуба, так что постарайся описать всё понятно и привлекательно 😊\n\n"
+                "⚠️ Пожалуйста, не пишите здесь цены услуг — для них будет отдельный шаг."
+            )
+        )
+        add_message(global_msg_contacted_fast, user_id, msg)
+        return
+
+    if call.data == ProfileRegistration_Menu.ADD_NAME_PRODUCT.name.lower():
+        await call.answer(text="Название услуги 🛒", show_alert=False)
+        command_name = ProfileRegistration_Menu.ADD_NAME_PRODUCT.value.lower()
+        await set_waiting_input(state, bot, chat_id, user_id, command_name, timeout=time_for_input_words)
+        msg = await bot.send_message(
+            chat_id=chat_id,
+            text="🛒 Введите название вашей конкретной услуги или товара:"
+        )
+        add_message(global_msg_contacted_fast, user_id, msg)
+        return
+
+    if call.data == ProfileRegistration_Menu.ADD_INFO_PRODUCT.name.lower():
+        await call.answer(text="Описание услуги 📝", show_alert=False)
+        command_name = ProfileRegistration_Menu.ADD_INFO_PRODUCT.value.lower()
+        await set_waiting_input(state, bot, chat_id, user_id, command_name, timeout=time_for_input_words)
+        msg = await bot.send_message(
+            chat_id=chat_id,
+            text=(
+                "Теперь подробно, но кратко опишите детали услуги (что входит, нюансы). "
+                "Также укажите условия отмены — за какое время вы готовы принять отмену без последствий (например: за час, за день, за неделю).\n\n"
+                "⚠️ Пожалуйста, не пишите в этом разделе цену — для неё будет отдельный шаг."
+            )
+        )
+        add_message(global_msg_contacted_fast, user_id, msg)
+        return
+        
+    if call.data == ProfileRegistration_Menu.ALL_SERVICES_FILLED.name.lower():
+        await call.answer(text="Переходим к ссылкам 🔗", show_alert=False)
+        from services.keyboards.keyboards_for_registration import get_socials_keyboard
+        msg = await bot.send_message(
+            chat_id=chat_id,
+            text="Вы добавили услуги. Теперь давайте перейдем к ссылкам. Нажмите на кнопку ниже:",
+            reply_markup=get_socials_keyboard()
         )
         add_message(global_msg_contacted_fast, user_id, msg)
         return
@@ -104,26 +144,35 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
 
         name = profile.get(UserProfileFields.NAME.value) or "Не указано"
         area = profile.get(UserProfileFields.AREA.value) or "Не указано"
-        service = profile.get(UserProfileFields.SERVICE_NAME.value) or "Не указано"
-        desc = profile.get(UserProfileFields.SERVICE_DESCRIPTION.value) or "Не указано"
-        price = profile.get(UserProfileFields.PRICE_INFO.value) or "Не указано"
+        profession = profile.get(UserProfileFields.PROFESSION.value) or "Не указано"
+        desc_prof = profile.get(UserProfileFields.DESCRIPTION_PROFESSION.value) or "Не указано"
         links = "\n".join(profile.get(UserProfileFields.SOCIAL_LINKS.value, [])) or "Не указано"
 
         text += f"<b>ФИО</b>: {name}\n"
         text += f"<b>Район</b>: {area}\n"
-        text += f"<b>Товар/Услуга</b>: {service}\n"
-        text += f"<b>Описание</b>: {desc}\n"
-        text += f"<b>Прайс</b>: {price}\n"
-        text += f"<b>Ссылки</b>:\n{links}\n"
+        text += f"<b>Деятельность</b>: {profession}\n"
+        text += f"<b>О себе/Детали</b>: {desc_prof}\n\n"
+        text += f"<b>Ссылки</b>:\n{links}\n\n"
+        
+        services = profile.get(UserProfileFields.SERVICES.value, [])
+        if services:
+            text += "<b>Ваши услуги:</b>\n"
+            for i, s in enumerate(services, 1):
+                text += f"{i}. <b>{s.get('name', '')}</b>\n"
+                text += f"   <i>Описание</i>: {s.get('description', '')}\n"
+                text += f"   <i>Прайс</i>: {s.get('price', '')}\n\n"
+        else:
+            text += "<b>Услуги отсутствуют.</b>\n"
 
         msg = await bot.send_message(
             chat_id=chat_id,
             text=text,
-            parse_mode="HTML",               # ← важно
+            parse_mode="HTML",
             reply_markup=get_profile_review_keyboard()
         )
 
         add_message(global_msg_contacted_fast, user_id, msg)
+        return
 
     if call.data == ProfileRegistration_Menu.RESTART_PROFILE.name.lower():
         await call.answer("Заполняем заново 🔄")
@@ -158,9 +207,8 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
         
         name = profile.get(UserProfileFields.NAME.value) or "Не указано"
         area = profile.get(UserProfileFields.AREA.value) or "Не указано"
-        service = profile.get(UserProfileFields.SERVICE_NAME.value) or "Не указано"
-        desc = profile.get(UserProfileFields.SERVICE_DESCRIPTION.value) or "Не указано"
-        price = profile.get(UserProfileFields.PRICE_INFO.value) or "Не указано"
+        profession = profile.get(UserProfileFields.PROFESSION.value) or "Не указано"
+        desc_prof = profile.get(UserProfileFields.DESCRIPTION_PROFESSION.value) or "Не указано"
         links = "\n".join(profile.get(UserProfileFields.SOCIAL_LINKS.value, [])) or "Не указано"
         
         import html
@@ -170,11 +218,20 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
             f"Username: @{html.escape(str(call.from_user.username))}\n\n"
             f"<b>ФИО</b>: {html.escape(str(name))}\n"
             f"<b>Район</b>: {html.escape(str(area))}\n"
-            f"<b>Товар/Услуга</b>: {html.escape(str(service))}\n"
-            f"<b>Описание</b>: {html.escape(str(desc))}\n"
-            f"<b>Прайс</b>: {html.escape(str(price))}\n"
-            f"<b>Ссылки</b>: \n{html.escape(str(links))}\n"
+            f"<b>Деятельность</b>: {html.escape(str(profession))}\n"
+            f"<b>О себе</b>: {html.escape(str(desc_prof))}\n"
+            f"<b>Ссылки</b>: \n{html.escape(str(links))}\n\n"
         )
+        
+        services = profile.get(UserProfileFields.SERVICES.value, [])
+        if services:
+            moderator_text += "<b>Услуги:</b>\n"
+            for i, s in enumerate(services, 1):
+                moderator_text += f"{i}. <b>{html.escape(str(s.get('name', '')))}</b>\n"
+                moderator_text += f"   <i>Описание</i>: {html.escape(str(s.get('description', '')))}\n"
+                moderator_text += f"   <i>Прайс</i>: {html.escape(str(s.get('price', '')))}\n\n"
+        else:
+            moderator_text += "<b>Услуги отсутствуют.</b>\n"
 
         # Отправляем модератору
         try:

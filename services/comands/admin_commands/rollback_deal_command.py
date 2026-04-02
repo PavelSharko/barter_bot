@@ -120,9 +120,13 @@ async def process_rollback_deal_input(message: Message, state: FSMContext, bot: 
         client_data[UserMetrics.BALANCE.value] = round(client_balance + total_cost, 2)
         
         # 3. Списываем комиссию у модератора
+        mod_warning = ""
         if mod_data:
             mod_balance = float(mod_data.get(UserMetrics.BALANCE.value, 0))
-            mod_data[UserMetrics.BALANCE.value] = round(max(0.0, mod_balance - server_commission), 2)
+            new_mod_balance = round(mod_balance - server_commission, 2)
+            mod_data[UserMetrics.BALANCE.value] = new_mod_balance
+            if new_mod_balance < 0:
+                mod_warning = f"\n⚠️ **Внимание!** Баланс аккаунта модератора (ID: {config.MODERATOR_CONTACT_ID}) ушел в минус: {new_mod_balance} 🪙"
 
         ALL_USERS_LIST.clear()
         ALL_USERS_LIST.update(users)
@@ -152,7 +156,8 @@ async def process_rollback_deal_input(message: Message, state: FSMContext, bot: 
         f"- Заказчику возвращено: {total_cost} 🪙\n"
         f"- У исполнителя списано: {provider_earnings} 🪙\n"
         f"- Списана комиссия модератора: {server_commission} 🪙\n"
-        f"- Удалено отзывов: {len(keys_to_delete)}",
+        f"- Удалено отзывов: {len(keys_to_delete)}"
+        f"{mod_warning}",
         parse_mode="Markdown", reply_markup=get_persistent_moderator_menu()
     )
     # add_message(global_msg_fast, user_id, message)
