@@ -34,8 +34,9 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
     if _changes_status == ChangesProfileStatus.WAITING_CONFIRMATION.value:
         await call.answer()
         msg = await call.message.answer(
-            "⏳ Ваш профиль сейчас проверяется модератором. "
-            "Просмотр и изменение профиля недоступны до завершения проверки.",
+            "Вы уже внесли изменения и отправили на проверку анкету"
+            "⏳ Сейчас модератор проверяет ваши новые данные "
+            "Повтороное изменения профиля будет возможно после завершения проверки.",
             reply_markup=get_persistent_main_menu()
         )
         add_message(global_msg_fast, user_id, msg)
@@ -78,7 +79,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
     # 3. Отмена редактирования (до входа в редактирование услуги)
     elif data == EditProfileButtons.CANCEL_EDIT_PROFILE.name.lower():
         await clear_messages(user_id, global_msg_fast)
-        await call.answer()
+        await call.answer("принято🔫🔫🔫")
         return
 
     # 4. Завершение редактирования

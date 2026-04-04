@@ -76,10 +76,10 @@ def get_keyboard_for_changing_profile() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="О себе", callback_data=ProcessChangingProfileButtons.EDIT_DESCRIPTION.name.lower())
         ],
         [
-            InlineKeyboardButton(text="Редактировать услуги", callback_data=ProcessChangingProfileButtons.EDIT_SERVICES.name.lower())
+            InlineKeyboardButton(text="Ссылки и соц. сети", callback_data=ProcessChangingProfileButtons.EDIT_SOCIALS.name.lower())
         ],
         [
-            InlineKeyboardButton(text="Ссылки и соц. сети", callback_data=ProcessChangingProfileButtons.EDIT_SOCIALS.name.lower())
+            InlineKeyboardButton(text="Редактировать услуги", callback_data=ProcessChangingProfileButtons.EDIT_SERVICES.name.lower())
         ],
         [
             InlineKeyboardButton(text="закончить редактирование ✅", callback_data=ProcessChangingProfileButtons.FINISH_EDITING.name.lower())
@@ -95,19 +95,19 @@ def get_still_editing_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
-                text="закончить редактирование ✅",
-                callback_data=ProcessChangingProfileButtons.FINISH_EDITING.name.lower()
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                text="Редактировать профиль ✏️",
+                text=ProcessChangingProfileButtons.BACK_TO_EDIT_MENU.value,
                 callback_data=ProcessChangingProfileButtons.BACK_TO_EDIT_MENU.name.lower()
             )
         ],
         [
             InlineKeyboardButton(
-                text="отменить изменения ❌",
+                text=ProcessChangingProfileButtons.FINISH_EDITING.value.lower(),
+                callback_data=ProcessChangingProfileButtons.FINISH_EDITING.name.lower()
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=ProcessChangingProfileButtons.CANCEL_CHANGES.value.lower(),
                 callback_data=ProcessChangingProfileButtons.CANCEL_CHANGES.name.lower()
             )
         ]
@@ -141,7 +141,7 @@ def get_services_footer_keyboard() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(
-                text="Назад",
+                text=ProcessChangingProfileButtons.BACK_TO_PREW_EDIT_MENU.value.lower(),
                 callback_data=ProcessChangingProfileButtons.BACK_TO_EDIT_MENU.name.lower()
             )
         ]
