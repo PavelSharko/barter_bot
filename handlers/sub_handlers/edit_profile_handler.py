@@ -1,15 +1,22 @@
 from aiogram import Bot
 from aiogram.types import CallbackQuery
 from aiogram.fsm.context import FSMContext
+import html
 
-from services.keyboards.bot_all_buttons import EditProfileButtons, MainMenuButtons
+from services.keyboards.bot_all_buttons import EditProfileButtons, MainMenuButtons, ProcessChangingProfileButtons
 from services.keyboards.sustem_inline_keyboard import get_inline_keyboard_close
 from services.state_bot.global_store import add_message, global_msg_fast
-from services.keyboards.edit_profile_keyboards import get_edit_profile_menu_keyboard
+from services.keyboards.edit_profile_keyboards import (
+    get_edit_profile_menu_keyboard, get_keyboard_for_changing_profile,
+    get_service_edit_keyboard, get_services_footer_keyboard
+)
 from services.msgs_utils.deleter_messages import clear_messages
 from handlers.fsm_utils import set_waiting_input
 from initApp.config_loader import config
-from services.keyboards.creator_persistent_keyboards import get_cancel_keyboard
+from services.keyboards.creator_persistent_keyboards import get_cancel_keyboard, get_persistent_main_menu
+from entity.Enums_entity import ChangesProfileStatus, UserFields, UserFlags, UserLifecycleStatus, UserProfileFields
+from services.users_utils.all_users_manager import load_all_users, update_user_field
+
 
 async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FSMContext):
     """
@@ -20,65 +27,106 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
     data = call.data
     await clear_messages(call.from_user.id, global_msg_fast)
 
-    
-
-    # # 1. Меню редактирования (список кнопок)
-    if data == EditProfileButtons.EDIT_PROFILE_MENU.name.lower():
+    # --- Проверка: профиль на проверке у модератора ---
+    _all_users = load_all_users()
+    _udata = _all_users.get(user_id) or _all_users.get(str(user_id)) or {}
+    _changes_status = _udata.get(UserFlags.CHANGES_PROFILE_CONFIRMED.value)
+    if _changes_status == ChangesProfileStatus.WAITING_CONFIRMATION.value:
         await call.answer()
         msg = await call.message.answer(
-            f"Для редактирвания профиля напишите модератору {config.MODERATOR_USERNAME}",
-            reply_markup=get_inline_keyboard_close()
+            "⏳ Ваш профиль сейчас проверяется модератором. "
+            "Просмотр и изменение профиля недоступны до завершения проверки.",
+            reply_markup=get_persistent_main_menu()
         )
         add_message(global_msg_fast, user_id, msg)
         return
-         # todo: заменить реализацию выше на закоментированную - так как это не платил заказчик но уже это готово наполивну
-        # await clear_messages(user_id, global_msg_fast)
-        # msg = await call.message.answer(
-        #     "📝 Выберите, что вы хотите изменить:",
-        #     reply_markup=get_edit_profile_menu_keyboard(user_id)
-        # )
-        # add_message(global_msg_fast, user_id, msg)
-        # await call.answer()
-        # return
 
-    # 2. Сохранить изменения (выход из режима редактирования)
-    elif data == EditProfileButtons.SAVE_CHANGES.name.lower():
-        from services.users_utils.all_users_manager import update_user_field
-        from entity.Enums_entity import UserFlags, ChangesProfileStatus, UserProfileFields
-        from services.keyboards.edit_profile_keyboards import get_moderator_approval_changes_keyboard
-        from services.users_utils.user_profile_manager import get_profile
-        from services.keyboards.creator_persistent_keyboards import get_persistent_main_menu
-        # Меняем статус
-        update_user_field(user_id, UserFlags.CHANGES_PROFILE_CONFIRMED.value, ChangesProfileStatus.WAITING_CONFIRMATION.value)
-        
-        # Формируем красивый текст анкеты
-        profile = get_profile(user_id) or {}
-        name = profile.get(UserProfileFields.NAME.value) or "Не указано"
-        area = profile.get(UserProfileFields.AREA.value) or "Не указано"
-        desc_prof = profile.get(UserProfileFields.DESCRIPTION_PROFESSION.value) or "Не указано"
-        links = "\n".join(profile.get(UserProfileFields.SOCIAL_LINKS.value, [])) or "Не указано"
+    # 1. Меню редактирования — показ подтверждения
+    if data == EditProfileButtons.EDIT_PROFILE_MENU.name.lower():
 
-        import html
-        moderator_text = (
-            f"⚠️ <b>Клиент внес изменения в профиль!</b>\n"
-            f"ID: <code>{user_id}</code>\n"
-            f"Username: @{html.escape(str(call.from_user.username))}\n\n"
-            f"<b>ФИО</b>: {html.escape(str(name))}\n"
-            f"<b>Район</b>: {html.escape(str(area))}\n"
-            f"<b>О себе</b>: {html.escape(str(desc_prof))}\n"
-            f"<b>Ссылки</b>: \n{html.escape(str(links))}\n\n"
+        from services.msgs_utils.prepared_massages import confirm_edit_profile_msg
+        from services.keyboards.edit_profile_keyboards import get_confirm_edit_profile_keyboard
+        await clear_messages(user_id, global_msg_fast)
+        msg = await call.message.answer(
+            confirm_edit_profile_msg,
+            reply_markup=get_confirm_edit_profile_keyboard()
         )
-        services = profile.get(UserProfileFields.SERVICES.value, [])
-        if services:
-            moderator_text += "<b>Услуги:</b>\n"
-            for i, s in enumerate(services, 1):
-                moderator_text += f"{i}. <b>{html.escape(str(s.get('name', '')))}</b>\n"
-                moderator_text += f"   <i>Описание</i>: {html.escape(str(s.get('description', '')))}\n"
-                moderator_text += f"   <i>Прайс</i>: {html.escape(str(s.get('price', '')))}\n\n"
-        else:
-            moderator_text += "<b>Услуги отсутствуют.</b>\n"
+        add_message(global_msg_fast, user_id, msg)
+        await call.answer()
+        return
+
+    # 2. Подтверждение — вход в режим редактирования
+    elif data == EditProfileButtons.CONFIRM_EDIT_PROFILE.name.lower():
+        from services.users_utils.temp_profile_manager import copy_profile_to_temp
+
+        # Копируем профиль во временный файл
+        copy_profile_to_temp(user_id)
+
+        # Устанавливаем статусы
+        update_user_field(user_id, UserFields.STATUS.value, UserLifecycleStatus.TIMELY_PROFILE_CHANGE_BLOCKED.value)
+        update_user_field(user_id, UserFlags.NOW_IS_TRY_CHANGING_PROFILE.value, True)
+
+        await clear_messages(user_id, global_msg_fast)
+        msg = await call.message.answer(
+            "Вы в режиме редактирования профиля",
+            reply_markup=get_keyboard_for_changing_profile()
+        )
+        add_message(global_msg_fast, user_id, msg)
+        await call.answer()
+        return
+
+    # 3. Отмена редактирования (до входа в редактирование услуги)
+    elif data == EditProfileButtons.CANCEL_EDIT_PROFILE.name.lower():
+        await clear_messages(user_id, global_msg_fast)
+        await call.answer()
+        return
+
+    # 4. Завершение редактирования
+    elif data == EditProfileButtons.SAVE_CHANGES.name.lower() or data == ProcessChangingProfileButtons.FINISH_EDITING.name.lower():
+        from services.keyboards.edit_profile_keyboards import get_moderator_approval_changes_keyboard
+        from services.users_utils.temp_profile_manager import (
+            freeze_temp_profile, delete_temp_profile, has_profile_changes,
+            build_diff_text, get_new_profile
+        )
+
+        changed = has_profile_changes(user_id)
+
+        if not changed:
+            # Ничего не изменено — просто выходим
+            delete_temp_profile(user_id)
+            update_user_field(user_id, UserFlags.NOW_IS_TRY_CHANGING_PROFILE.value, False)
+            update_user_field(user_id, UserFields.STATUS.value, UserLifecycleStatus.CLIENT.value)
+
+            await call.answer()
+            await clear_messages(user_id, global_msg_fast)
+            msg = await call.message.answer(
+                "Вы не внесли изменений. Режим редактирования завершён.",
+                reply_markup=get_persistent_main_menu()
+            )
+            add_message(global_msg_fast, user_id, msg)
+            return
+
+        # Фиксируем: editing → {new, old}. Данные в основной файл НЕ переносятся до решения модератора.
+        freeze_temp_profile(user_id)
+
+        # Снимаем флаг редактирования, ставим статус ожидания подтверждения
+        update_user_field(user_id, UserFlags.NOW_IS_TRY_CHANGING_PROFILE.value, False)
+        update_user_field(user_id, UserFlags.CHANGES_PROFILE_CONFIRMED.value, ChangesProfileStatus.WAITING_CONFIRMATION.value)
+
+        # Формируем diff для модератора
+        new_profile = get_new_profile(user_id) or {}
+        diff_text = build_diff_text(user_id)
+
+        moderator_text = (
+            f"⚠️ <b>Клиент хочет изменить профиль!</b>\n"
+            f"ID: <code>{user_id}</code>\n"
+            f"Username: @{html.escape(str(call.from_user.username or ''))}\n\n"
+            f"<b>Изменённые поля:</b>\n"
+            f"{diff_text}"
+        )
+
         try:
-            msg_mod = await bot.send_message(
+            await bot.send_message(
                 chat_id=config.MODERATOR_CONTACT_ID,
                 text=moderator_text,
                 parse_mode="HTML",
@@ -86,53 +134,243 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
             )
         except Exception as e:
             print(f"Ошибка отправки модератору: {e}")
-            
-        await bot.send_message(chat_id=user_id, text="Изменения отправлены на модерацию ✅")
+
         await call.answer()
         await clear_messages(user_id, global_msg_fast)
-        
         msg = await call.message.answer(
-            "Ваши изменения успешно отправлены на проверку модератору.",
+            "Ваши изменения отправлены на проверку модератору. "
+            "Пока идёт проверка вы можете записываться на сделки, "
+            "но не оказывать услуги — мы постараемся проверить побыстрее 🙏",
             reply_markup=get_persistent_main_menu()
         )
         add_message(global_msg_fast, user_id, msg)
         return
 
-    # 3. Обработка конкретных кнопок редактирования
-    # Паттерн: Очистить -> Set State -> Ask User -> Add to clear list
-    
-    command_name = None
-    prompt_text = ""
 
-    if data == EditProfileButtons.EDIT_NAME.name.lower():
-        command_name = EditProfileButtons.EDIT_NAME.value.lower()
-        prompt_text = "Введите новое имя (ФИО, минимум 2 слова):"
-        
-    elif data == EditProfileButtons.EDIT_AREA.name.lower():
-        command_name = EditProfileButtons.EDIT_AREA.value.lower()
-        prompt_text = "Введите новый район:"
+    # 4.1. Отмена всех изменений
 
-    elif data == EditProfileButtons.EDIT_NAME_PRODUCT.name.lower():
-        command_name = EditProfileButtons.EDIT_NAME_PRODUCT.value.lower()
-        prompt_text = "Введите новое название услуги/товара:"
+    elif data == ProcessChangingProfileButtons.CANCEL_CHANGES.name.lower():
+        from services.users_utils.temp_profile_manager import delete_temp_profile
 
-    elif data == EditProfileButtons.EDIT_FULL_INFO_PRODUCT.name.lower():
-        command_name = EditProfileButtons.EDIT_FULL_INFO_PRODUCT.value.lower()
-        prompt_text = "Введите новое описание (100-500 символов):"
+        delete_temp_profile(user_id)
+        update_user_field(user_id, UserFlags.NOW_IS_TRY_CHANGING_PROFILE.value, False)
+        update_user_field(user_id, UserFields.STATUS.value, UserLifecycleStatus.CLIENT.value)
 
-    elif data == EditProfileButtons.EDIT_PRICE.name.lower():
-        command_name = EditProfileButtons.EDIT_PRICE.value.lower()
-        prompt_text = "Введите новый прайс (число 1-99):"
-
-    if command_name:
+        await call.answer()
         await clear_messages(user_id, global_msg_fast)
-        await set_waiting_input(state, bot, chat_id, user_id, command_name, timeout=config.TIME_TO_INPUT_MSG_FSM)
-        
+
         msg = await call.message.answer(
-            f"✏️ {prompt_text}",
-            reply_markup=get_cancel_keyboard()
+            "Изменения отменены. Ваш профиль не был изменён.",
+            reply_markup=get_persistent_main_menu()
         )
         add_message(global_msg_fast, user_id, msg)
+        return
+
+    # ========================================================
+    # 5. Кнопки из ProcessChangingProfileButtons — простые поля
+    # ========================================================
+
+    # 5.1. Имя
+    elif data == ProcessChangingProfileButtons.EDIT_NAME.name.lower():
+        from services.users_utils.temp_profile_manager import get_temp_profile
+        temp = get_temp_profile(user_id) or {}
+        old_name = temp.get(UserProfileFields.NAME.value, "Не указано")
+        prompt = f"Текущее имя: <b>{html.escape(str(old_name))}</b>\n\nВведите новое имя (ФИО, минимум 2 слова):"
+        msg = await call.message.answer(prompt, parse_mode="HTML")
+        add_message(global_msg_fast, user_id, msg)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_NAME.value)
+        await call.answer()
+        return
+
+    # 5.2. Район
+    elif data == ProcessChangingProfileButtons.EDIT_AREA.name.lower():
+        from services.users_utils.temp_profile_manager import get_temp_profile
+        temp = get_temp_profile(user_id) or {}
+        old_area = temp.get(UserProfileFields.AREA.value, "Не указано")
+        prompt = f"Текущий район: <b>{html.escape(str(old_area))}</b>\n\nВведите новый район:"
+        msg = await call.message.answer(prompt, parse_mode="HTML")
+        add_message(global_msg_fast, user_id, msg)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_AREA.value)
+        await call.answer()
+        return
+
+    # 5.3. Деятельность
+    elif data == ProcessChangingProfileButtons.EDIT_PROFESSION.name.lower():
+        from services.users_utils.temp_profile_manager import get_temp_profile
+        temp = get_temp_profile(user_id) or {}
+        old_prof = temp.get(UserProfileFields.PROFESSION.value, "Не указано")
+        prompt = f"Текущая деятельность: <b>{html.escape(str(old_prof))}</b>\n\nВведите новое название деятельности (от 2 до 50 символов):"
+        msg = await call.message.answer(prompt, parse_mode="HTML")
+        add_message(global_msg_fast, user_id, msg)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_PROFESSION.value)
+        await call.answer()
+        return
+
+    # 5.4. Описание (о себе)
+    elif data == ProcessChangingProfileButtons.EDIT_DESCRIPTION.name.lower():
+        from services.users_utils.temp_profile_manager import get_temp_profile
+        temp = get_temp_profile(user_id) or {}
+        old_desc = temp.get(UserProfileFields.DESCRIPTION_PROFESSION.value, "Не указано")
+        prompt = f"Текущее описание:\n<i>{html.escape(str(old_desc))}</i>\n\nВведите новое описание (от 50 до 300 символов):"
+        msg = await call.message.answer(prompt, parse_mode="HTML")
+        add_message(global_msg_fast, user_id, msg)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_DESCRIPTION.value)
+        await call.answer()
+        return
+
+    # 5.5. Ссылки
+    elif data == ProcessChangingProfileButtons.EDIT_SOCIALS.name.lower():
+        from services.users_utils.temp_profile_manager import get_temp_profile
+        temp = get_temp_profile(user_id) or {}
+        old_links = temp.get(UserProfileFields.SOCIAL_LINKS.value, [])
+        old_links_text = "\n".join(old_links) if old_links else "Не указано"
+        prompt = f"Текущие ссылки:\n{html.escape(old_links_text)}\n\nВведите новые ссылки (от 1 до 10, через пробел или перенос строки):"
+        msg = await call.message.answer(prompt, parse_mode="HTML")
+        add_message(global_msg_fast, user_id, msg)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_SOCIALS.value)
+        await call.answer()
+        return
+
+    # ========================================================
+    # 6. Услуги — показ списка
+    # ========================================================
+    elif data == ProcessChangingProfileButtons.EDIT_SERVICES.name.lower():
+        from services.users_utils.temp_profile_manager import get_temp_profile
+
+        temp = get_temp_profile(user_id) or {}
+        services = temp.get(UserProfileFields.SERVICES.value, [])
+
+        if not services:
+            msg = await call.message.answer(
+                "У вас пока нет услуг.\n\nХотите добавить услугу?",
+                reply_markup=get_services_footer_keyboard()
+            )
+            add_message(global_msg_fast, user_id, msg)
+            await call.answer()
+            return
+
+        for idx, s in enumerate(services):
+            svc_name = html.escape(str(s.get('name', 'Услуга')))
+            svc_desc = html.escape(str(s.get('description', 'Без описания')))
+            svc_price = html.escape(str(s.get('price', '0')))
+            text = (
+                f"<b>Услуга {idx + 1} — {svc_name}</b>\n\n"
+                f"{svc_desc}\n\n"
+                f"Цена: {svc_price} 🪙"
+            )
+            msg = await call.message.answer(
+                text,
+                parse_mode="HTML",
+                reply_markup=get_service_edit_keyboard(idx)
+            )
+            add_message(global_msg_fast, user_id, msg)
+
+        # Футер: добавить услугу + назад
+        msg = await call.message.answer(
+            "Выберите услугу которую хотите отредактировать либо вернитесь назад.\n\nХотите добавить ещё услуги? Нажмите на кнопку 👇",
+            reply_markup=get_services_footer_keyboard()
+        )
+        add_message(global_msg_fast, user_id, msg)
+        await call.answer()
+        return
+
+    # 6.1. Назад к основному меню редактирования
+    elif data == ProcessChangingProfileButtons.BACK_TO_EDIT_MENU.name.lower():
+        await clear_messages(user_id, global_msg_fast)
+        msg = await call.message.answer(
+            "Вы в режиме редактирования профиля",
+            reply_markup=get_keyboard_for_changing_profile()
+        )
+        add_message(global_msg_fast, user_id, msg)
+        await call.answer()
+        return
+
+    # ========================================================
+    # 7. Редактирование конкретной услуги
+    # ========================================================
+    elif data.startswith(f"{ProcessChangingProfileButtons.EDIT_SERVICE.name.lower()}_"):
+        from services.users_utils.temp_profile_manager import get_temp_profile
+
+        try:
+            service_idx = int(data.split('_')[-1])
+        except (ValueError, IndexError):
+            await call.answer("Ошибка", show_alert=True)
+            return
+
+        temp = get_temp_profile(user_id) or {}
+        services = temp.get(UserProfileFields.SERVICES.value, [])
+        if service_idx >= len(services):
+            await call.answer("Услуга не найдена", show_alert=True)
+            return
+
+        old_service = services[service_idx]
+        old_name = html.escape(str(old_service.get('name', '')))
+
+        # Сохраняем индекс редактируемой услуги в FSM
+        await state.update_data(editing_service_idx=service_idx)
+
+        await clear_messages(user_id, global_msg_fast)
+        prompt = (
+            f"Окей — приступим 🔧\n\n"
+            f"Ранее услуга называлась: <b>{old_name}</b>\n"
+            f"Введите новое название:"
+        )
+        msg = await call.message.answer(prompt, parse_mode="HTML")
+        add_message(global_msg_fast, user_id, msg)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_SERVICE_NAME_INPUT.value)
+        # Восстанавливаем editing_service_idx после set_waiting_input (он делает state.clear)
+        await state.update_data(editing_service_idx=service_idx)
+        await call.answer()
+        return
+
+    # ========================================================
+    # 8. Удаление услуги
+    # ========================================================
+    elif data.startswith(f"{ProcessChangingProfileButtons.DELETE_SERVICE.name.lower()}_"):
+        from services.users_utils.temp_profile_manager import get_temp_profile, update_temp_profile
+
+        try:
+            service_idx = int(data.split('_')[-1])
+        except (ValueError, IndexError):
+            await call.answer("Ошибка", show_alert=True)
+            return
+
+        temp = get_temp_profile(user_id) or {}
+        services = temp.get(UserProfileFields.SERVICES.value, [])
+
+        if len(services) <= 1:
+            await clear_messages(user_id, global_msg_fast)
+            msg = await call.message.answer(
+                "Вы не можете удалить последнюю услугу. Для этого добавьте одну новую, "
+                "чтобы после удаления осталась минимум одна услуга.",
+                reply_markup=get_keyboard_for_changing_profile()
+            )
+            add_message(global_msg_fast, user_id, msg)
+            await call.answer()
+            return
+
+        if service_idx < len(services):
+            services.pop(service_idx)
+            update_temp_profile(user_id, {UserProfileFields.SERVICES.value: services})
+
+        await clear_messages(user_id, global_msg_fast)
+        msg = await call.message.answer(
+            "Отлично, услуга была удалена ✅",
+            reply_markup=get_keyboard_for_changing_profile()
+        )
+        add_message(global_msg_fast, user_id, msg)
+        await call.answer()
+        return
+
+    # ========================================================
+    # 9. Добавление новой услуги
+    # ========================================================
+    elif data == ProcessChangingProfileButtons.ADD_SERVICE.name.lower():
+        await clear_messages(user_id, global_msg_fast)
+        prompt = "Введите название новой услуги (от 2 до 50 символов):"
+        msg = await call.message.answer(prompt)
+        add_message(global_msg_fast, user_id, msg)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.ADD_SERVICE_NAME_INPUT.value)
         await call.answer()
         return
 

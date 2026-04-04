@@ -1,5 +1,5 @@
 from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
-from services.keyboards.bot_all_buttons import EditProfileButtons, CommandsBot, MainMenuButtons
+from services.keyboards.bot_all_buttons import EditProfileButtons, CommandsBot, MainMenuButtons, ProcessChangingProfileButtons
 from services.users_utils.all_users_manager import load_all_users
 from entity.Enums_entity import UserFlags, ChangesProfileStatus
 
@@ -15,12 +15,11 @@ def get_edit_profile_menu_keyboard(user_id: int) -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="Район", callback_data=EditProfileButtons.EDIT_AREA.name.lower())
         ],
         [
-            InlineKeyboardButton(text="Название услуги", callback_data=EditProfileButtons.EDIT_NAME_PRODUCT.name.lower()),
+            InlineKeyboardButton(text="О себе", callback_data=EditProfileButtons.EDIT_ABOUT.name.lower()),
             InlineKeyboardButton(text="Прайс", callback_data=EditProfileButtons.EDIT_PRICE.name.lower())
         ],
         [
-            # Описание обычно длинное, поэтому оставляем его на всю строку
-            InlineKeyboardButton(text="Описание услуги", callback_data=EditProfileButtons.EDIT_FULL_INFO_PRODUCT.name.lower())
+            InlineKeyboardButton(text="Редактировать услуги", callback_data=EditProfileButtons.EDIT_SERVICES.name.lower())
         ]
     ]
 
@@ -33,15 +32,25 @@ def get_edit_profile_menu_keyboard(user_id: int) -> InlineKeyboardMarkup:
             )
         ])
 
-    # Добавляем кнопку Закрыть
-    keyboard.append([
-        InlineKeyboardButton(
-            text=CommandsBot.CLOSE.value,
-            callback_data=CommandsBot.CLOSE.value.lower()
-        )
-    ])
-
     return InlineKeyboardMarkup(inline_keyboard=keyboard)
+
+
+def get_confirm_edit_profile_keyboard() -> InlineKeyboardMarkup:
+    """Клавиатура подтверждения редактирования профиля."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text=EditProfileButtons.CONFIRM_EDIT_PROFILE.value,
+                callback_data=EditProfileButtons.CONFIRM_EDIT_PROFILE.name.lower()
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=EditProfileButtons.CANCEL_EDIT_PROFILE.value,
+                callback_data=EditProfileButtons.CANCEL_EDIT_PROFILE.name.lower()
+            )
+        ]
+    ])
 
 
 def get_after_edit_keyboard() -> InlineKeyboardMarkup:
@@ -52,6 +61,89 @@ def get_after_edit_keyboard() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(text=EditProfileButtons.SAVE_CHANGES.value, callback_data=EditProfileButtons.SAVE_CHANGES.name.lower())
+        ]
+    ])
+
+def get_keyboard_for_changing_profile() -> InlineKeyboardMarkup:
+    """Полная клавиатура редактирования профиля с блокировкой."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="Имя", callback_data=ProcessChangingProfileButtons.EDIT_NAME.name.lower()),
+            InlineKeyboardButton(text="Район", callback_data=ProcessChangingProfileButtons.EDIT_AREA.name.lower())
+        ],
+        [
+            InlineKeyboardButton(text="Деятельность", callback_data=ProcessChangingProfileButtons.EDIT_PROFESSION.name.lower()),
+            InlineKeyboardButton(text="О себе", callback_data=ProcessChangingProfileButtons.EDIT_DESCRIPTION.name.lower())
+        ],
+        [
+            InlineKeyboardButton(text="Редактировать услуги", callback_data=ProcessChangingProfileButtons.EDIT_SERVICES.name.lower())
+        ],
+        [
+            InlineKeyboardButton(text="Ссылки и соц. сети", callback_data=ProcessChangingProfileButtons.EDIT_SOCIALS.name.lower())
+        ],
+        [
+            InlineKeyboardButton(text="закончить редактирование ✅", callback_data=ProcessChangingProfileButtons.FINISH_EDITING.name.lower())
+        ],
+        [
+            InlineKeyboardButton(text="отменить изменения ❌", callback_data=ProcessChangingProfileButtons.CANCEL_CHANGES.name.lower())
+        ]
+    ])
+
+
+def get_still_editing_keyboard() -> InlineKeyboardMarkup:
+    """Клавиатура-барьер: пользователь ещё в процессе редактирования."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="закончить редактирование ✅",
+                callback_data=ProcessChangingProfileButtons.FINISH_EDITING.name.lower()
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Редактировать профиль ✏️",
+                callback_data=ProcessChangingProfileButtons.BACK_TO_EDIT_MENU.name.lower()
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="отменить изменения ❌",
+                callback_data=ProcessChangingProfileButtons.CANCEL_CHANGES.name.lower()
+            )
+        ]
+    ])
+
+
+def get_service_edit_keyboard(service_idx: int) -> InlineKeyboardMarkup:
+    """Клавиатура для одной услуги: «редактировать» / «удалить услугу»."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="Редактировать",
+                callback_data=f"{ProcessChangingProfileButtons.EDIT_SERVICE.name.lower()}_{service_idx}"
+            ),
+            InlineKeyboardButton(
+                text="Удалить услугу",
+                callback_data=f"{ProcessChangingProfileButtons.DELETE_SERVICE.name.lower()}_{service_idx}"
+            )
+        ]
+    ])
+
+
+def get_services_footer_keyboard() -> InlineKeyboardMarkup:
+    """Клавиатура внизу списка услуг: «добавить услугу» + «назад»."""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="Добавить услугу ➕",
+                callback_data=ProcessChangingProfileButtons.ADD_SERVICE.name.lower()
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Назад",
+                callback_data=ProcessChangingProfileButtons.BACK_TO_EDIT_MENU.name.lower()
+            )
         ]
     ])
 

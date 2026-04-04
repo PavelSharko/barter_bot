@@ -293,7 +293,7 @@ rejection_changes_targets: dict[int, dict] = {}
 async def handle_moderator_changes_action(call: CallbackQuery, bot: Bot, state: FSMContext):
     from services.keyboards.bot_all_buttons import EditProfileButtons
     try:
-        # action name can have underscores, so rsplit by last underscore
+        # action name may contain underscores, split only on the last underscore
         action, target_id_str = call.data.rsplit('_', 1)
         user_id = int(target_id_str)
     except Exception:
@@ -310,28 +310,41 @@ async def handle_moderator_changes_action(call: CallbackQuery, bot: Bot, state: 
 
     if action == EditProfileButtons.ACCEPT_CHANGES.name.lower():
         from services.users_utils.all_users_manager import update_user_field
-        from entity.Enums_entity import UserFlags, ChangesProfileStatus
+        from services.users_utils.temp_profile_manager import apply_new_profile, delete_temp_profile
+        from entity.Enums_entity import UserFlags, ChangesProfileStatus, UserLifecycleStatus
+
+        # Применяем новый профиль в основной файл
+        applied = apply_new_profile(user_id)
+        if not applied:
+            # Возможно temp уже нет — просто снимаем статусы
+            delete_temp_profile(user_id)
+
+        # Снимаем статус блокировки → CLIENT
+        update_user_field(user_id, UserFields.STATUS.value, UserLifecycleStatus.CLIENT.value)
         update_user_field(user_id, UserFlags.CHANGES_PROFILE_CONFIRMED.value, ChangesProfileStatus.CONFIRMED.value)
-        
-        # notify user
+
+        # Уведомляем пользователя
         try:
             msg = await bot.send_message(
                 chat_id=user_id,
-                text="✅ Ваши изменения в анкете подтверждены модератором!",
+                text="✅ Ваши изменения в анкете подтверждены модератором! Профиль обновлён.",
                 reply_markup=get_persistent_main_menu()
             )
             add_message(global_msg_fast, user_id, msg)
         except Exception:
             pass
-            
-        new_text = msg_text + "\n\n✅ ИЗМЕНЕНИЯ ПРИНЯТЫ"
-        if is_caption:
-            await call.message.edit_caption(caption=new_text, reply_markup=None)
-        else:
-            await call.message.edit_text(text=new_text, reply_markup=None)
-            
-        await call.answer("✅ Изменения в анкете приняты и сохранены.")
-        
+
+        new_text = (msg_text or "") + "\n\n✅ ИЗМЕНЕНИЯ ПРИНЯТЫ"
+        try:
+            if is_caption:
+                await call.message.edit_caption(caption=new_text, reply_markup=None)
+            else:
+                await call.message.edit_text(text=new_text, reply_markup=None)
+        except Exception:
+            pass
+
+        await call.answer("✅ Изменения приняты и применены.")
+
     elif action == EditProfileButtons.REJECT_CHANGES.name.lower():
         await call.answer("Запрос причины отклонения...")
         rejection_changes_targets[call.from_user.id] = {
@@ -369,38 +382,52 @@ async def process_rejection_changes_reason(message: Message, state: FSMContext, 
     if not target_data:
         await message.answer("❌ Сессия устарела — начни процесс проверки заново.")
         return
-    
+
     target_user_id = target_data['user_id']
+
     from services.users_utils.all_users_manager import update_user_field
-    from entity.Enums_entity import UserFlags, ChangesProfileStatus
-    
-    update_user_field(target_user_id, UserFlags.CHANGES_PROFILE_CONFIRMED.value, ChangesProfileStatus.PENDING_CHANGES.value)
-    
-    # Notify user
+    from services.users_utils.temp_profile_manager import apply_old_profile
+    from entity.Enums_entity import UserFlags, ChangesProfileStatus, UserLifecycleStatus
+
+    # Откатываем: удаляем temp-запись (старый профиль в основном файле не менялся — всё ок)
+    apply_old_profile(target_user_id)
+
+    # Снимаем статус временной блокировки → CLIENT, сбрасываем флаг changes
+    update_user_field(target_user_id, UserFields.STATUS.value, UserLifecycleStatus.CLIENT.value)
+    update_user_field(target_user_id, UserFlags.CHANGES_PROFILE_CONFIRMED.value, ChangesProfileStatus.NOT_CHANGES.value)
+
+    # Уведомляем пользователя
     try:
-         msg = await bot.send_message(
-              chat_id=target_user_id,
-              text=f"🚫 Ваши изменения профиля не приняты модератором по причине:\n\n{reason}",
-              reply_markup=get_persistent_main_menu()
-         )
-         add_message(global_msg_fast, target_user_id, msg)
+        msg = await bot.send_message(
+            chat_id=target_user_id,
+            text=(
+                f"🚫 Ваши изменения профиля отклонены модератором.\n\n"
+                f"Причина: {reason}\n\n"
+                "Ваш прежний профиль сохранён без изменений. "
+                "Вы можете попробовать изменить профиль снова."
+            ),
+            reply_markup=get_persistent_main_menu()
+        )
+        add_message(global_msg_fast, target_user_id, msg)
     except Exception:
-         pass
-         
-    await message.answer("✅ Правки отклонены. Пользователь получил уведомление с причиной.")
+        pass
+
+    await message.answer("✅ Изменения отклонены. Пользователь получил уведомление с причиной.")
     await clear_waiting_input(state, message.chat.id, message.from_user.id)
     rejection_changes_targets.pop(message.from_user.id, None)
-    
+
     origin_msg_id = target_data.get('message_id')
     origin_text = target_data.get('text', "")
     is_caption = target_data.get('is_caption', False)
-    
+
     if origin_msg_id:
         new_text = f"{origin_text}\n\n🚫 ИЗМЕНЕНИЯ ОТКЛОНЕНЫ\nПричина: {reason}"
         try:
-             if is_caption:
-                 await bot.edit_message_caption(chat_id=message.chat.id, message_id=origin_msg_id, caption=new_text, reply_markup=None)
-             else:
-                 await bot.edit_message_text(chat_id=message.chat.id, message_id=origin_msg_id, text=new_text, reply_markup=None)
+            if is_caption:
+                await bot.edit_message_caption(chat_id=message.chat.id, message_id=origin_msg_id, caption=new_text, reply_markup=None)
+            else:
+                await bot.edit_message_text(chat_id=message.chat.id, message_id=origin_msg_id, text=new_text, reply_markup=None)
         except Exception:
-             pass
+            pass
+
+

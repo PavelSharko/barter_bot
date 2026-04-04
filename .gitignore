@@ -8,3 +8,17 @@
 "ALL_TEXT_MSGS_IMPROVED (3).txt"
 change_map.json
 map_changes.py
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# OS
+.DS_Store
+
+# Rust
+.rust/
+
+# Temporary files
+test_prof.json

@@ -71,7 +71,7 @@ async def start_command_logic(message: Message, bot: Bot):
         )
         add_message(global_msg_contacted_fast, user_id, msg)
 
-    elif status == UserLifecycleStatus.CLIENT.value:
+    elif status == UserLifecycleStatus.CLIENT.value or status == UserLifecycleStatus.TIMELY_PROFILE_CHANGE_BLOCKED.value:
         msg = await bot.send_message(
             chat_id=user_id,
             text=first_start_message,

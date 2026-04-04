@@ -7,6 +7,7 @@ class UserLifecycleStatus(str, Enum):
     CLIENT = "client"
     REJECTED = "rejected"
     BLOCKED = "blocked"
+    TIMELY_PROFILE_CHANGE_BLOCKED = "timely_profile_change_blocked"
 
 class ReviewStatus(str, Enum):
     NONE = "none"
@@ -55,6 +56,7 @@ class UserFlags(str, Enum):
     RULES_READ = "rules_read"
     IS_EXCLUDED = "is_excluded"
     CHANGES_PROFILE_CONFIRMED = "changes_profile_confirmed"
+    NOW_IS_TRY_CHANGING_PROFILE = "now_is_try_changing_profile"
 
 class ChangesProfileStatus(str, Enum):
     WAITING_CONFIRMATION = "waiting_confirmation" 

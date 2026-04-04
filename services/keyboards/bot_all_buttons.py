@@ -75,13 +75,39 @@ class ReviewProcessButtons(str, Enum):
 class EditProfileButtons(str, Enum):
     EDIT_NAME = "ИМЯ"
     EDIT_AREA = "район"
-    EDIT_NAME_PRODUCT = "название услуги"
-    EDIT_FULL_INFO_PRODUCT = "описание услуги"
+    EDIT_ABOUT = "о себе"
+    EDIT_SERVICES = "редактировать услуги"
+    CONFIRM_EDIT_PROFILE = "да, редактировать"
+    CANCEL_EDIT_PROFILE = "отмена редактирования"
     EDIT_PRICE = "прайс"
     SAVE_CHANGES = "сохранить изменения"
     ACCEPT_CHANGES = "принять изменения"
     REJECT_CHANGES = "отклонить изменения"
     EDIT_PROFILE_MENU = "Редактировать профиль ✏️"
+
+
+class ProcessChangingProfileButtons(str, Enum):
+    EDIT_NAME = "edit_name"
+    EDIT_AREA = "edit_area"
+    EDIT_PROFESSION = "edit_profession"
+    EDIT_DESCRIPTION = "edit_desc"
+    EDIT_SERVICES = "edit_services"
+    EDIT_SOCIALS = "edit_socials"
+    FINISH_EDITING = "finish_editing_profile"
+    # Кнопки для управления услугами
+    EDIT_SERVICE = "edit_single_service"
+    DELETE_SERVICE = "delete_single_service"
+    ADD_SERVICE = "add_new_service"
+    BACK_TO_EDIT_MENU = "back_to_edit_menu"
+    CANCEL_CHANGES = "cancel_all_changes"
+    # FSM-команды для пошагового ввода при редактировании услуги
+    EDIT_SERVICE_NAME_INPUT = "edit_svc_name_input"
+    EDIT_SERVICE_DESC_INPUT = "edit_svc_desc_input"
+    EDIT_SERVICE_PRICE_INPUT = "edit_svc_price_input"
+    # FSM-команды для добавления новой услуги
+    ADD_SERVICE_NAME_INPUT = "add_svc_name_input"
+    ADD_SERVICE_DESC_INPUT = "add_svc_desc_input"
+    ADD_SERVICE_PRICE_INPUT = "add_svc_price_input"
 
 
 

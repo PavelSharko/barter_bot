@@ -13,7 +13,7 @@ from handlers.sub_handlers.main_menu_handler import handle_callback_main_menu_fo
 from handlers.sub_handlers.edit_profile_handler import handle_edit_profile_callbacks
 from handlers.sub_handlers.deal_process_handler import handle_deal_process_callbacks
 
-from entity.Enums_entity import UserFields, UserLifecycleStatus
+from entity.Enums_entity import UserFields, UserLifecycleStatus, UserFlags
 from initApp.config_loader import config
 from services.comands.developer_commands.standart_comands import save_actual_data
 from services.comands.users_commands.for_contacted.contacted_menu_inline_handler import \
@@ -25,7 +25,7 @@ from services.comands.users_commands.edit_profile_commands import extract_and_up
     extract_and_update_product_name, extract_and_update_description, extract_and_update_price
 from services.comands.users_commands.sub_process1.extract_info_from_msg_procces1 import extract_text_info_from_msg
 from services.keyboards.bot_all_buttons import AdminChatButtons, CommandsBot, MainMenuButtons, SubprocessMenu, \
-    CONTACTED_Menu, ProfileRegistration_Menu, ModeratorChatButtons, EditProfileButtons, DealProcessButtons, ReviewProcessButtons
+    CONTACTED_Menu, ProfileRegistration_Menu, ModeratorChatButtons, EditProfileButtons, DealProcessButtons, ReviewProcessButtons, ProcessChangingProfileButtons
 from services.keyboards.creator_inline_keyboards import get_inline_keyboard_menu_for_users
 from services.msgs_utils.check_mandatory_reviews import check_and_enforce_unreviewed_deals
 from services.users_utils.all_users_manager import get_all_users
@@ -39,7 +39,7 @@ from services.msgs_utils.prepared_massages import menu_msg, menu_msg_for_devs, f
 from services.send_msg_utils.utuls_send_msg import safe_send_message
 from services.state_bot.global_store import FSM, global_msg_fast, add_message, global_msg_contacted_fast, \
     global_msg_for_close
-from services.users_utils.all_users_manager import register_and_check_user, get_all_users
+from services.users_utils.all_users_manager import register_and_check_user, get_all_users, load_all_users
 from services.users_utils.check_blocked import check_blocked_user
 
 from handlers.fsm_utils import set_waiting_input
@@ -80,6 +80,13 @@ def register_handlers(dp, bot):
         
         # --- Check Blocked ---
         if await check_blocked_user(user_id, bot, message):
+            return
+
+        # Перехват /start даже во время FSM для возможности сброса
+        if (message.text or "").casefold() == CommandsBot.START.value.lower():
+            await state.clear()
+            await clear_messages(user_id, global_msg_fast)
+            await start_command_logic(message, bot)
             return
 
         # Получаем данные состояния
@@ -139,21 +146,52 @@ def register_handlers(dp, bot):
             from services.comands.admin_commands.rollback_deal_command import process_rollback_deal_input
             await process_rollback_deal_input(message, state, bot)
 
-        # для ввода от юзеров бота со статусом клиент (редактирование профиля)
-        elif current_command == EditProfileButtons.EDIT_NAME.value.lower():
-            await extract_and_update_name(message, state, user_id)
+        # для ввода от юзеров бота со статусом клиент (редактирование профиля через temp)
+        elif current_command == ProcessChangingProfileButtons.EDIT_NAME.value:
+            from services.comands.users_commands.edit_temp_profile_commands import handle_edit_temp_name
+            await handle_edit_temp_name(message, state, user_id)
 
-        elif current_command == EditProfileButtons.EDIT_AREA.value.lower():
-            await extract_and_update_area(message, state, user_id)
+        elif current_command == ProcessChangingProfileButtons.EDIT_AREA.value:
+            from services.comands.users_commands.edit_temp_profile_commands import handle_edit_temp_area
+            await handle_edit_temp_area(message, state, user_id)
 
-        elif current_command == EditProfileButtons.EDIT_NAME_PRODUCT.value.lower():
-            await extract_and_update_product_name(message, state, user_id)
+        elif current_command == ProcessChangingProfileButtons.EDIT_PROFESSION.value:
+            from services.comands.users_commands.edit_temp_profile_commands import handle_edit_temp_profession
+            await handle_edit_temp_profession(message, state, user_id)
 
-        elif current_command == EditProfileButtons.EDIT_FULL_INFO_PRODUCT.value.lower():
-            await extract_and_update_description(message, state, user_id)
+        elif current_command == ProcessChangingProfileButtons.EDIT_DESCRIPTION.value:
+            from services.comands.users_commands.edit_temp_profile_commands import handle_edit_temp_description
+            await handle_edit_temp_description(message, state, user_id)
 
-        elif current_command == EditProfileButtons.EDIT_PRICE.value.lower():
-            await extract_and_update_price(message, state, user_id)
+        elif current_command == ProcessChangingProfileButtons.EDIT_SOCIALS.value:
+            from services.comands.users_commands.edit_temp_profile_commands import handle_edit_temp_socials
+            await handle_edit_temp_socials(message, state, user_id)
+
+        # FSM для редактирования конкретной услуги (3 шага)
+        elif current_command == ProcessChangingProfileButtons.EDIT_SERVICE_NAME_INPUT.value:
+            from services.comands.users_commands.edit_temp_profile_commands import handle_edit_service_name_input
+            await handle_edit_service_name_input(message, state, user_id)
+
+        elif current_command == ProcessChangingProfileButtons.EDIT_SERVICE_DESC_INPUT.value:
+            from services.comands.users_commands.edit_temp_profile_commands import handle_edit_service_desc_input
+            await handle_edit_service_desc_input(message, state, user_id)
+
+        elif current_command == ProcessChangingProfileButtons.EDIT_SERVICE_PRICE_INPUT.value:
+            from services.comands.users_commands.edit_temp_profile_commands import handle_edit_service_price_input
+            await handle_edit_service_price_input(message, state, user_id)
+
+        # FSM для добавления новой услуги (3 шага)
+        elif current_command == ProcessChangingProfileButtons.ADD_SERVICE_NAME_INPUT.value:
+            from services.comands.users_commands.edit_temp_profile_commands import handle_add_service_name_input
+            await handle_add_service_name_input(message, state, user_id)
+
+        elif current_command == ProcessChangingProfileButtons.ADD_SERVICE_DESC_INPUT.value:
+            from services.comands.users_commands.edit_temp_profile_commands import handle_add_service_desc_input
+            await handle_add_service_desc_input(message, state, user_id)
+
+        elif current_command == ProcessChangingProfileButtons.ADD_SERVICE_PRICE_INPUT.value:
+            from services.comands.users_commands.edit_temp_profile_commands import handle_add_service_price_input
+            await handle_add_service_price_input(message, state, user_id)
 
         elif current_command == ReviewProcessButtons.ADD_TEXT_REVIEW.name.lower():
             from services.comands.users_commands.review_text_commands import extract_and_save_review_text
@@ -179,10 +217,31 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
             return
 
 
-        if call.data == CommandsBot.CLOSE.value.lower():
-            await call.answer("❌ Убираю всё...")
+        if call.data in (CommandsBot.CLOSE.value.lower(), CommandsBot.CANCEL.value.lower()):
+            await call.answer("❌ Операция отменена.")
             await clear_messages(user_id, global_msg_fast, global_msg_for_close)
             return
+
+        # --- Барьер: пользователь ещё редактирует профиль ---
+        _users_check = load_all_users()
+        _user_data_check = _users_check.get(user_id) or _users_check.get(str(user_id)) or {}
+        if _user_data_check.get(UserFlags.NOW_IS_TRY_CHANGING_PROFILE.value) == True:
+            # Разрешаем только ProcessChangingProfileButtons
+            _is_edit_btn = (
+                call.data in [item.name.lower() for item in ProcessChangingProfileButtons] or
+                call.data.startswith(f"{ProcessChangingProfileButtons.EDIT_SERVICE.name.lower()}_") or
+                call.data.startswith(f"{ProcessChangingProfileButtons.DELETE_SERVICE.name.lower()}_")
+            )
+            if not _is_edit_btn:
+                from services.keyboards.edit_profile_keyboards import get_still_editing_keyboard
+                await clear_messages(user_id, global_msg_fast)
+                msg = await call.message.answer(
+                    "Вы ещё в процессе изменения своего профиля. Завершите (если готово) или отмените изменения, или продолжите редактирование.",
+                    reply_markup=get_still_editing_keyboard()
+                )
+                add_message(global_msg_fast, user_id, msg)
+                await call.answer()
+                return
 
         if is_chat(call.message, [config.DEVELOPER_CHAT_ID]):
             """ТОЛЬКО ДЛЯ ЧАТА разработчика"""
@@ -220,8 +279,13 @@ async def handle_callback(call: CallbackQuery, bot, state: FSMContext):
             await handle_callback_main_menu_for_users(call, bot, state)
             return
 
-        # Обработка кнопок из EditProfileButtons
-        if call.data in [item.name.lower() for item in EditProfileButtons]:
+        # Обработка кнопок из EditProfileButtons и ProcessChangingProfileButtons
+        if (
+            call.data in [item.name.lower() for item in EditProfileButtons] or
+            call.data in [item.name.lower() for item in ProcessChangingProfileButtons] or
+            call.data.startswith(f"{ProcessChangingProfileButtons.EDIT_SERVICE.name.lower()}_") or
+            call.data.startswith(f"{ProcessChangingProfileButtons.DELETE_SERVICE.name.lower()}_")
+        ):
             await handle_edit_profile_callbacks(bot, call, state)
             return
 
@@ -264,6 +328,19 @@ async def handler_comands_or_simple_msg(message: Message, bot):
 
     text = (message.text or "").casefold()  # нормализуем сразу
 
+    # --- Барьер: пользователь ещё редактирует профиль ---
+    _users_check = load_all_users()
+    _user_data_check = _users_check.get(user_id) or _users_check.get(str(user_id)) or {}
+    if _user_data_check.get(UserFlags.NOW_IS_TRY_CHANGING_PROFILE.value) == True:
+        from services.keyboards.edit_profile_keyboards import get_still_editing_keyboard
+        add_message(global_msg_fast, user_id, message)
+        await clear_messages(user_id, global_msg_fast)
+        msg = await message.answer(
+            "Вы ещё в процессе изменения своего профиля. Завершите (если готово) или отмените изменения, или продолжите редактирование.",
+            reply_markup=get_still_editing_keyboard()
+        )
+        add_message(global_msg_fast, user_id, msg)
+        return
 
     """проверка — сообщение из любого чата"""
     # --- START ---
@@ -333,8 +410,8 @@ async def handler_comands_or_simple_msg(message: Message, bot):
         user_data = users_db.get(user_id) or users_db.get(str(user_id)) or {}
         user_status = user_data.get(UserFields.STATUS.value)
         
-        # Если статус == client, показываем клавиатуру. Иначе — нет.
-        if user_status == UserLifecycleStatus.CLIENT.value:
+        # Если статус == client или temporary_blocked, показываем клавиатуру. Иначе — нет.
+        if user_status in (UserLifecycleStatus.CLIENT.value, UserLifecycleStatus.TIMELY_PROFILE_CHANGE_BLOCKED.value):
             reply_markup_to_send = get_persistent_main_menu()
         else:
             reply_markup_to_send = None

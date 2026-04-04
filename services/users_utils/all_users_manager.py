@@ -44,9 +44,11 @@ def load_all_users() -> dict[int, dict]:
     ensure_file_exists(config.ALL_USERS_PATH)
     try:
         with open(config.ALL_USERS_PATH, "r", encoding="utf-8") as f:
-            ALL_USERS_LIST = {int(uid): data for uid, data in json.load(f).items()}
+            data = {int(uid): data for uid, data in json.load(f).items()}
+            ALL_USERS_LIST.clear()
+            ALL_USERS_LIST.update(data)
     except (json.JSONDecodeError, FileNotFoundError):
-        ALL_USERS_LIST = {}
+        ALL_USERS_LIST.clear()
     return dict(ALL_USERS_LIST)
 
 

@@ -367,9 +367,20 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
 
         profiles = load_profiles()
         target_profile = profiles.get(target_id) or profiles.get(str(target_id))
+        users = load_all_users()
+        target_data = users.get(target_id) or users.get(str(target_id)) or {}
         
         if not target_profile:
             msg = await call.message.answer("⚠️ Анкета не найдена.")
+            add_message(global_msg_fast, user_id, msg)
+            return
+
+        from entity.Enums_entity import UserFields, UserLifecycleStatus
+        if target_data.get(UserFields.STATUS.value) == UserLifecycleStatus.TIMELY_PROFILE_CHANGE_BLOCKED.value:
+            msg = await call.message.answer(
+                "Извините, этот пользователь сейчас редактирует свой профиль и пока недоступен для новых сделок.",
+                reply_markup=get_inline_keyboard_close()
+            )
             add_message(global_msg_fast, user_id, msg)
             return
             
@@ -424,6 +435,17 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             add_message(global_msg_fast, user_id, msg)
             return
             
+        users = load_all_users()
+        target_data = users.get(target_id) or users.get(str(target_id)) or {}
+        from entity.Enums_entity import UserFields, UserLifecycleStatus
+        if target_data.get(UserFields.STATUS.value) == UserLifecycleStatus.TIMELY_PROFILE_CHANGE_BLOCKED.value:
+            msg = await call.message.answer(
+                "Извините, этот пользователь сейчас редактирует свой профиль и пока недоступен для новых сделок.",
+                reply_markup=get_inline_keyboard_close()
+            )
+            add_message(global_msg_fast, user_id, msg)
+            return
+            
         msg = await call.message.answer(
             "Ты принимаешь условия оказания и отмены этой услуги? 🤝",
             reply_markup=get_accept_terms_keyboard(target_id_str, service_idx)
@@ -451,7 +473,6 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             add_message(global_msg_fast, user_id, msg)
             return
             
-        # Загружаем юзеров для проверки баланса
         lock = FileLock(f"{config.ALL_USERS_PATH}.lock")
         with lock:
             users = load_all_users()
@@ -459,6 +480,16 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             if not buyer_data:
                 return
                 
+            provider_data = users.get(provider_id) or users.get(str(provider_id)) or {}
+            from entity.Enums_entity import UserFields, UserLifecycleStatus
+            if provider_data.get(UserFields.STATUS.value) == UserLifecycleStatus.TIMELY_PROFILE_CHANGE_BLOCKED.value:
+                msg = await call.message.answer(
+                    "Извините, этот пользователь сейчас редактирует свой профиль и пока недоступен.",
+                    reply_markup=get_inline_keyboard_close()
+                )
+                add_message(global_msg_fast, user_id, msg)
+                return
+
             total_balance = float(buyer_data.get(UserMetrics.BALANCE.value, 0))
             block_balance = float(buyer_data.get(UserMetrics.BLOCK_BALANCE.value, 0))
             free_balance = total_balance - block_balance

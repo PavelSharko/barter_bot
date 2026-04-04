@@ -21,9 +21,11 @@ def load_profiles() -> dict[int, dict]:
     ensure_file_exists(config.USER_PROFILE_PATH)
     try:
         with open(config.USER_PROFILE_PATH, "r", encoding="utf-8") as f:
-            ALL_PROFILES_LIST = {int(uid): data for uid, data in json.load(f).items()}
+            data = {int(uid): data for uid, data in json.load(f).items()}
+            ALL_PROFILES_LIST.clear()
+            ALL_PROFILES_LIST.update(data)
     except (json.JSONDecodeError, FileNotFoundError):
-        ALL_PROFILES_LIST = {}
+        ALL_PROFILES_LIST.clear()
     return dict(ALL_PROFILES_LIST)
 
 
