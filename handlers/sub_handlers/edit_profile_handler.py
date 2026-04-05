@@ -177,7 +177,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         temp = get_temp_profile(user_id) or {}
         old_name = temp.get(UserProfileFields.NAME.value, "Не указано")
         prompt = f"Текущее имя: <b>{html.escape(str(old_name))}</b>\n\nВведите новое имя (ФИО, минимум 2 слова):"
-        msg = await call.message.answer(prompt, parse_mode="HTML")
+        msg = await call.message.answer(prompt, parse_mode="HTML", reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
         await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_NAME.value)
         await call.answer()
@@ -189,7 +189,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         temp = get_temp_profile(user_id) or {}
         old_area = temp.get(UserProfileFields.AREA.value, "Не указано")
         prompt = f"Текущий район: <b>{html.escape(str(old_area))}</b>\n\nВведите новый район:"
-        msg = await call.message.answer(prompt, parse_mode="HTML")
+        msg = await call.message.answer(prompt, parse_mode="HTML", reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
         await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_AREA.value)
         await call.answer()

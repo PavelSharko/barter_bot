@@ -4,7 +4,7 @@
 """
 
 import re
-from handlers.fsm_utils import clear_waiting_input, set_waiting_input
+from handlers.fsm_utils import clear_waiting_input, set_waiting_input, check_cancel_input
 from services.msgs_utils.deleter_messages import clear_messages
 from services.state_bot.global_store import add_message, global_msg_fast
 from services.users_utils.temp_profile_manager import get_temp_profile, update_temp_profile
@@ -228,12 +228,22 @@ async def handle_add_service_price_input(message, state, user_id):
 # ПРОСТЫЕ ПОЛЯ (имя, район, деятельность, описание, ссылки)
 # ========================================================
 
-async def handle_edit_temp_name(message, state, user_id):
+async def handle_edit_temp_name(message, state, user_id, bot):
     """Редактирование имени через временный профиль."""
+    if await check_cancel_input(message.text, message, state):
+        await clear_waiting_input(state, message.chat.id, message.from_user.id)
+        msg = await bot.send_message(chat_id = user_id, text = "Вы в режиме редактирования профиля",
+            reply_markup=get_keyboard_for_changing_profile()
+        )
+        add_message(global_msg_fast, user_id, msg)
+        return
+
+
     text = (message.text or "").strip()
     if not text:
         await _send_error(message, user_id, "Нужен текст — картинки и файлы здесь не подойдут 🙏")
         return
+
 
     if not (2 <= len(text) <= 100):
         await _send_error(message, user_id, "Ошибка: имя должно быть от 2 до 100 символов")
@@ -259,8 +269,18 @@ async def handle_edit_temp_name(message, state, user_id):
     add_message(global_msg_fast, user_id, msg)
 
 
-async def handle_edit_temp_area(message, state, user_id):
+async def handle_edit_temp_area(message, state, user_id, bot):
     """Редактирование района через временный профиль."""
+    if await check_cancel_input(message.text, message, state):
+        await clear_waiting_input(state, message.chat.id, message.from_user.id)
+        msg = await bot.send_message(chat_id = user_id, text = "Вы в режиме редактирования профиля",
+            reply_markup=get_keyboard_for_changing_profile()
+        )
+        add_message(global_msg_fast, user_id, msg)
+        return
+
+
+
     text = (message.text or "").strip()
     if not text:
         await _send_error(message, user_id, "Нужен текст")

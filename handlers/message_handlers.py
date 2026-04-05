@@ -149,11 +149,11 @@ def register_handlers(dp, bot):
         # для ввода от юзеров бота со статусом клиент (редактирование профиля через temp)
         elif current_command == ProcessChangingProfileButtons.EDIT_NAME.value:
             from services.comands.users_commands.edit_temp_profile_commands import handle_edit_temp_name
-            await handle_edit_temp_name(message, state, user_id)
+            await handle_edit_temp_name(message, state, user_id, bot)
 
         elif current_command == ProcessChangingProfileButtons.EDIT_AREA.value:
             from services.comands.users_commands.edit_temp_profile_commands import handle_edit_temp_area
-            await handle_edit_temp_area(message, state, user_id)
+            await handle_edit_temp_area(message, state, user_id, bot)
 
         elif current_command == ProcessChangingProfileButtons.EDIT_PROFESSION.value:
             from services.comands.users_commands.edit_temp_profile_commands import handle_edit_temp_profession
