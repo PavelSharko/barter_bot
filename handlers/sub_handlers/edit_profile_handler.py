@@ -36,8 +36,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         msg = await call.message.answer(
             "Вы уже внесли изменения и отправили на проверку анкету"
             "⏳ Сейчас модератор проверяет ваши новые данные "
-            "Повтороное изменения профиля будет возможно после завершения проверки.",
-            reply_markup=get_persistent_main_menu()
+            "Повтороное изменения профиля будет возможно после завершения проверки."
         )
         add_message(global_msg_fast, user_id, msg)
         return
@@ -101,8 +100,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
             await call.answer()
             await clear_messages(user_id, global_msg_fast)
             msg = await call.message.answer(
-                "Вы не внесли изменений. Режим редактирования завершён.",
-                reply_markup=get_persistent_main_menu()
+                "Вы не внесли изменений. Режим редактирования завершён."
             )
             add_message(global_msg_fast, user_id, msg)
             return
@@ -141,8 +139,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         msg = await call.message.answer(
             "Ваши изменения отправлены на проверку модератору. "
             "Пока идёт проверка вы можете записываться на сделки, "
-            "но не оказывать услуги — мы постараемся проверить побыстрее 🙏",
-            reply_markup=get_persistent_main_menu()
+            "но не оказывать услуги — мы постараемся проверить побыстрее 🙏"
         )
         add_message(global_msg_fast, user_id, msg)
         return
@@ -161,8 +158,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         await clear_messages(user_id, global_msg_fast)
 
         msg = await call.message.answer(
-            "Изменения отменены. Ваш профиль не был изменён.",
-            reply_markup=get_persistent_main_menu()
+            "Изменения отменены. Ваш профиль не был изменён."
         )
         add_message(global_msg_fast, user_id, msg)
         return

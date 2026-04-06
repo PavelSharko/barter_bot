@@ -25,7 +25,7 @@ async def some_method_msg_from_develop(message):
         text=f"меню управления для разработчика",
         reply_markup=get_menu_keyboard_for_developer()
     )
-    add_message(global_msg_fast, user_id, msg0)
+    # add_message(global_msg_fast, user_id, msg0)
     add_message(global_msg_fast, user_id, msg)
     add_message(global_msg_fast, user_id, message)
     return

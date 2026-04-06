@@ -181,6 +181,25 @@ def apply_old_profile(user_id: int) -> bool:
         return True
 
 
+def unfreeze_temp_profile(user_id: int) -> bool:
+    """
+    Возвращает профиль из стадии 'new' обратно в 'editing' 
+    (вызывается при отклонении изменений, если хотим вернуть черновик в работу).
+    """
+    lock_path = f"{config.TEMP_PROFILE_PATH}.lock"
+    with FileLock(lock_path, timeout=10):
+        temp_profiles = _load_temp_profiles()
+        record = temp_profiles.get(user_id)
+        if not record or _KEY_NEW not in record:
+            return False
+            
+        temp_profiles[user_id] = {
+            _KEY_EDITING: copy.deepcopy(record[_KEY_NEW])
+        }
+        _save_temp_profiles(temp_profiles)
+        return True
+
+
 # ─── Удаление записи ──────────────────────────────────────────────────────────
 
 def delete_temp_profile(user_id: int) -> bool:

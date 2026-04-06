@@ -5,7 +5,7 @@ import html
 
 from services.keyboards.bot_all_buttons import ProcessChangingProfileButtons
 from services.keyboards.edit_profile_keyboards import get_keyboard_for_changing_profile, get_services_footer_keyboard, get_service_edit_keyboard
-from services.keyboards.creator_persistent_keyboards import get_cancel_keyboard
+from services.keyboards.creator_persistent_keyboards import get_cancel_keyboard, get_persistent_main_menu
 from services.state_bot.global_store import add_message, global_msg_fast
 from services.msgs_utils.deleter_messages import clear_messages
 from handlers.fsm_utils import set_waiting_input, clear_waiting_input, check_cancel_input
@@ -111,6 +111,10 @@ async def facade_add_service_input(message: Message, state: FSMContext, bot: Bot
         await clear_messages(user_id, global_msg_fast)
         await clear_waiting_input(state, chat_id, user_id)
 
+        await message.answer(
+            f"...: {text}",
+            reply_markup=get_persistent_main_menu()
+        )   
         msg = await message.answer(
             "✅ Услуга добавлена!",
             reply_markup=get_keyboard_for_changing_profile()
@@ -219,6 +223,10 @@ async def facade_edit_service_input(message: Message, state: FSMContext, bot: Bo
         await clear_messages(user_id, global_msg_fast)
         await clear_waiting_input(state, chat_id, user_id)
 
+        await message.answer(
+            f"...: {text}",
+            reply_markup=get_persistent_main_menu()
+        )
         msg = await message.answer(
             "Отлично, услуга была изменена ✅",
             reply_markup=get_keyboard_for_changing_profile()

@@ -13,7 +13,7 @@ from services.msgs_utils.deleter_messages import clear_messages
 from services.state_bot.global_store import global_msg_fast, add_message
 from services.users_utils.user_profile_manager import load_profiles
 from services.users_utils.deals_manager import load_deals_locked, save_deals_locked
-from entity.Enums_entity import UserProfileFields, UserMetrics, UserFields, UserLifecycleStatus, DealStatus, DealFields
+from entity.Enums_entity import UserProfileFields, UserMetrics, UserFields, UserLifecycleStatus, DealStatus, DealFields, UserFlags
 from services.keyboards.creator_inline_keyboards import get_profile_view_keyboard, get_find_service_keyboard, get_service_profile_keyboard, get_accept_terms_keyboard, get_reviews_list_keyboard
 from services.comands.users_commands.show_balance import show_user_balance
 from services.users_utils.all_users_manager import load_all_users, save_all_users
@@ -43,7 +43,17 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
              add_message(global_msg_fast, user_id, msg)
              return
 
-        text = (
+        text = ""
+        
+        all_users = load_all_users()
+        user_data = all_users.get(str(user_id)) or all_users.get(user_id) or {}
+        user_status = user_data.get(UserFields.STATUS.value)
+        is_changing = user_data.get(UserFlags.NOW_IS_TRY_CHANGING_PROFILE.value, False)
+
+        if user_status == "timely_profile_change_blocked" and not is_changing:
+            text += "============\n⚠️⚠️⚠️внимание это ваши данные старого профиля, новые изменения которые вы внесли уже находятся на проверке у модератора, как только он их подтвердит вы увидите обновлённую информацию о своем профиле\n============\n\n"
+
+        text += (
             f"👤 **Ваш профиль:**\n\n"
             f"**Имя:** {user_profile.get(UserProfileFields.NAME.value, 'Не указано')}\n"
             f"**Район:** {user_profile.get(UserProfileFields.AREA.value, 'Не указано')}\n"
@@ -459,11 +469,11 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             if not buyer_data:
                 return
                 
-            total_balance = float(buyer_data.get(UserMetrics.BALANCE.value, 0))
-            block_balance = float(buyer_data.get(UserMetrics.BLOCK_BALANCE.value, 0))
-            free_balance = total_balance - block_balance
-            
-            # Получаем профиль исполнителя для цены
+            provider_data = users.get(provider_id) or users.get(str(provider_id))
+            if not provider_data:
+                return
+                
+            # Получаем профиль исполнителя для цены и имени
             profiles = load_profiles()
             provider_profile = profiles.get(provider_id) or profiles.get(str(provider_id))
             
@@ -471,6 +481,56 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
                 msg = await call.message.answer("⚠️ Профиль этого пользователя не найден.")
                 add_message(global_msg_fast, user_id, msg)
                 return
+
+            # --- ПРОВЕРКА БЛОКИРОВКИ ИСПОЛНИТЕЛЯ НА РЕДАКТИРОВАНИЕ ---
+            provider_status = provider_data.get(UserFields.STATUS.value)
+            is_changing_profile = provider_data.get(UserFlags.NOW_IS_TRY_CHANGING_PROFILE.value, False)
+            provider_name = provider_profile.get(UserProfileFields.NAME.value, "Исполнитель")
+            
+            if provider_status == UserLifecycleStatus.TIMELY_PROFILE_CHANGE_BLOCKED.value:
+                if not is_changing_profile:
+                    msg = await call.message.answer(
+                        f"Извините пользователь {provider_name} изменил свои данные, его анкета находится на проверке у модератора, вы пока не можете заказать его услуги",
+                        reply_markup=get_inline_keyboard_close()
+                    )
+                    add_message(global_msg_fast, user_id, msg)
+                    
+                    try:
+                        await bot.send_message(
+                            chat_id=provider_id, 
+                            text="С вами хотят вступить сделку, но ваша анкета на проверке у модератора после внесения изменений в анкету"
+                        )
+                    except Exception:
+                        pass
+                        
+                    try:
+                        await bot.send_message(
+                            chat_id=config.MODERATOR_CONTACT_ID, 
+                            text="кто-то пытался сделать сделку но акета еще на проверке у модератора и поэтому получил отказ - проверьте заявки на правки анкет"
+                        )
+                    except Exception:
+                        pass
+                else:
+                    msg = await call.message.answer(
+                        f"Извините пользователь {provider_name} пробует изменить свои данные сейчас, его анкета должна будет пройти проверку модератора, вы пока не можете заказать его услуги",
+                        reply_markup=get_inline_keyboard_close()
+                    )
+                    add_message(global_msg_fast, user_id, msg)
+                    
+                    try:
+                        await bot.send_message(
+                            chat_id=provider_id, 
+                            text="С вами хотят вступить сделку, но ваша анкета на редактировании"
+                        )
+                    except Exception:
+                        pass
+                
+                return
+            # --- КОНЕЦ ПРОВЕРКИ БЛОКИРОВКИ ---
+            
+            total_balance = float(buyer_data.get(UserMetrics.BALANCE.value, 0))
+            block_balance = float(buyer_data.get(UserMetrics.BLOCK_BALANCE.value, 0))
+            free_balance = total_balance - block_balance
                 
             try:
                 services = provider_profile.get(UserProfileFields.SERVICES.value, [])
@@ -787,7 +847,7 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         except Exception as e:
             print(f"Ошибка отправки контактов клиенту: {e}")
 
-        await bot.send_message(chat_id=user_id, text="Заявка принята!", reply_markup=get_persistent_main_menu())
+        await bot.send_message(chat_id=user_id, text="Заявка принята!")
         await call.answer()
         return
 

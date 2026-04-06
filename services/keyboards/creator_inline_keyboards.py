@@ -69,7 +69,7 @@ def get_find_service_keyboard(user_id: int = None) -> InlineKeyboardMarkup:
     keyboard = []
     
     for u_id, u_data in users.items():
-        if u_data.get(UserFields.STATUS.value) == UserLifecycleStatus.CLIENT.value:
+        if u_data.get(UserFields.STATUS.value) in (UserLifecycleStatus.CLIENT.value, UserLifecycleStatus.TIMELY_PROFILE_CHANGE_BLOCKED.value):
             u_profile = profiles.get(u_id) or profiles.get(str(u_id))
             if u_profile:
                 # Кнопка теперь показывает имя пользователя и его деятельность (PROFESSION)

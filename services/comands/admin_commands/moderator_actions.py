@@ -7,6 +7,7 @@ from initApp.config_loader import config
 from services.keyboards.bot_all_buttons import ProfileRegistration_Menu, CommandsBot, AdminChatButtons, CategoryButtons
 from services.keyboards.creator_persistent_keyboards import get_persistent_main_menu, get_cancel_keyboard
 from services.keyboards.keyboards_for_registration import get_rejected_keyboard, get_category_keyboard
+from services.keyboards.edit_profile_keyboards import get_still_editing_keyboard
 from services.msgs_utils.deleter_messages import clear_messages
 from services.users_utils.all_users_manager import load_all_users, save_all_users
 from services.state_bot.global_store import global_msg_fast, global_msg_for_close, add_message
@@ -246,7 +247,7 @@ async def handle_category_selection(call: CallbackQuery, bot: Bot):
             parse_mode="HTML",
             reply_markup=get_persistent_main_menu()
         )
-        add_message(global_msg_fast, int(target_user_id), msg)
+        # add_message(global_msg_fast, int(target_user_id), msg)
     except Exception as e:
         await call.answer(f"⚠️ Пользователь одобрён, но уведомление не доставлено: {e}", show_alert=True)
 
@@ -327,10 +328,8 @@ async def handle_moderator_changes_action(call: CallbackQuery, bot: Bot, state: 
         try:
             msg = await bot.send_message(
                 chat_id=user_id,
-                text="✅ Ваши изменения в анкете подтверждены модератором! Профиль обновлён.",
-                reply_markup=get_persistent_main_menu()
+                text="✅ Ваши изменения в анкете подтверждены модератором! Профиль обновлён."
             )
-            add_message(global_msg_fast, user_id, msg)
         except Exception:
             pass
 
@@ -385,16 +384,16 @@ async def process_rejection_changes_reason(message: Message, state: FSMContext, 
 
     target_user_id = target_data['user_id']
 
+    from services.users_utils.temp_profile_manager import apply_old_profile, unfreeze_temp_profile
     from services.users_utils.all_users_manager import update_user_field
-    from services.users_utils.temp_profile_manager import apply_old_profile
     from entity.Enums_entity import UserFlags, ChangesProfileStatus, UserLifecycleStatus
 
-    # Откатываем: удаляем temp-запись (старый профиль в основном файле не менялся — всё ок)
-    apply_old_profile(target_user_id)
+    # Откатываем: распаковываем 'new' обратно в 'editing' для продолжения работы
+    unfreeze_temp_profile(target_user_id)
 
-    # Снимаем статус временной блокировки → CLIENT, сбрасываем флаг changes
-    update_user_field(target_user_id, UserFields.STATUS.value, UserLifecycleStatus.CLIENT.value)
-    update_user_field(target_user_id, UserFlags.CHANGES_PROFILE_CONFIRMED.value, ChangesProfileStatus.NOT_CHANGES.value)
+    # Переводим статус обратно в процесс редактирования
+    update_user_field(target_user_id, UserFlags.NOW_IS_TRY_CHANGING_PROFILE.value, True)
+    update_user_field(target_user_id, UserFlags.CHANGES_PROFILE_CONFIRMED.value, ChangesProfileStatus.PENDING_CHANGES.value)
 
     # Уведомляем пользователя
     try:
@@ -403,10 +402,10 @@ async def process_rejection_changes_reason(message: Message, state: FSMContext, 
             text=(
                 f"🚫 Ваши изменения профиля отклонены модератором.\n\n"
                 f"Причина: {reason}\n\n"
-                "Ваш прежний профиль сохранён без изменений. "
-                "Вы можете попробовать изменить профиль снова."
+                "Ваши изменения не применились "
+                "Вы можете попробовать изменить профиль снова или отменить изменения "
             ),
-            reply_markup=get_persistent_main_menu()
+            reply_markup=get_still_editing_keyboard()
         )
         add_message(global_msg_fast, target_user_id, msg)
     except Exception:

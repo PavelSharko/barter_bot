@@ -3,6 +3,7 @@
 Валидация аналогична to_set_profile_commands.py при регистрации.
 """
 
+from services.keyboards.creator_persistent_keyboards import get_persistent_main_menu
 import re
 from handlers.fsm_utils import clear_waiting_input, set_waiting_input, check_cancel_input
 from services.msgs_utils.deleter_messages import clear_messages
@@ -58,6 +59,10 @@ async def handle_edit_temp_name(message, state, user_id, bot):
     await clear_messages(user_id, global_msg_fast)
     await clear_waiting_input(state, message.chat.id, user_id)
 
+    await message.answer(
+        f"...: {text}",
+        reply_markup=get_persistent_main_menu()
+    )
     msg = await message.answer(
         f"✅ Имя изменено на: {text}",
         reply_markup=get_keyboard_for_changing_profile()
@@ -96,6 +101,10 @@ async def handle_edit_temp_area(message, state, user_id, bot):
     await clear_messages(user_id, global_msg_fast)
     await clear_waiting_input(state, message.chat.id, user_id)
 
+    await message.answer(
+        f"...: {text}",
+        reply_markup=get_persistent_main_menu()
+    )
     msg = await message.answer(
         f"✅ Район изменён на: {text}",
         reply_markup=get_keyboard_for_changing_profile()
@@ -128,6 +137,10 @@ async def handle_edit_temp_profession(message, state, user_id, bot):
     await clear_messages(user_id, global_msg_fast)
     await clear_waiting_input(state, message.chat.id, user_id)
 
+    await message.answer(
+        f"...: {text}",
+        reply_markup=get_persistent_main_menu()
+    )
     msg = await message.answer(
         f"✅ Деятельность изменена на: {text}",
         reply_markup=get_keyboard_for_changing_profile()
@@ -160,6 +173,10 @@ async def handle_edit_temp_description(message, state, user_id, bot):
     await clear_messages(user_id, global_msg_fast)
     await clear_waiting_input(state, message.chat.id, user_id)
 
+    await message.answer(
+        f"...: {text}",
+        reply_markup=get_persistent_main_menu()
+    )
     msg = await message.answer(
         "✅ Описание о себе обновлено.",
         reply_markup=get_keyboard_for_changing_profile()
@@ -195,6 +212,10 @@ async def handle_edit_temp_socials(message, state, user_id, bot):
     await clear_messages(user_id, global_msg_fast)
     await clear_waiting_input(state, message.chat.id, user_id)
 
+    await message.answer(
+        f"...: {text}",
+        reply_markup=get_persistent_main_menu()
+    )
     msg = await message.answer(
         "✅ Ссылки обновлены.",
         reply_markup=get_keyboard_for_changing_profile()

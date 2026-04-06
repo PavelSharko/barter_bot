@@ -16,9 +16,9 @@ from enum import Enum
 
 # --- Команды бота для админа ---
 class AdminChatButtons(str, Enum):
-    BUTTON1 = "просто_кнопка1"
-    BUTTON2 = "просто_кнопка2"
-    BUTTON_FOR_INSERT_ANYTHING = "вставить_текст_фото"
+    BUTTON1 = "просто_кнопка1" #todo удалить
+
+
 
 class ModeratorChatButtons(str, Enum):
     MENU = "меню модератора"

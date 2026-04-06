@@ -23,7 +23,7 @@ from services.comands.users_commands.for_contacted.to_set_profile_commands impor
     extract_and_save_socials
 from services.comands.users_commands.edit_profile_commands import extract_and_update_name, extract_and_update_area, \
     extract_and_update_product_name, extract_and_update_description, extract_and_update_price
-from services.comands.users_commands.sub_process1.extract_info_from_msg_procces1 import extract_text_info_from_msg
+# from services.comands.users_commands.sub_process1.extract_info_from_msg_procces1 import extract_text_info_from_msg
 from services.keyboards.bot_all_buttons import AdminChatButtons, CommandsBot, MainMenuButtons, SubprocessMenu, \
     CONTACTED_Menu, ProfileRegistration_Menu, ModeratorChatButtons, EditProfileButtons, DealProcessButtons, ReviewProcessButtons, ProcessChangingProfileButtons
 from services.keyboards.creator_inline_keyboards import get_inline_keyboard_menu_for_users
@@ -97,12 +97,12 @@ def register_handlers(dp, bot):
         if await check_and_enforce_unreviewed_deals(user_id, bot, message, is_callback=False, current_data=current_command):
              return
         
-        """для админ чата"""
-        if current_command == AdminChatButtons.BUTTON_FOR_INSERT_ANYTHING.name.lower():
-            await extract_text_info_from_msg(message, state, user_id)
+        # для админ чата
+        # if current_command == AdminChatButtons.BUTTON_FOR_INSERT_ANYTHING.name.lower():
+            # await extract_text_info_from_msg(message, state, user_id)
 
-            """для инфы анкеты"""
-        elif current_command == ProfileRegistration_Menu.ENTER_NAME.value.lower():
+        """для инфы анкеты"""
+        if current_command == ProfileRegistration_Menu.ENTER_NAME.value.lower():
             await extract_and_save_full_name_from_msg(message, state, user_id)
 
         elif current_command == ProfileRegistration_Menu.ENTER_AREA.value.lower():
@@ -375,24 +375,6 @@ async def handler_comands_or_simple_msg(message: Message, bot):
         return
 
 
-    # # todo проверить условие ниже
-    # elif text in [c.value.lower() for c in CommandsBot] or text in [c.value for c in AdminChatButtons]\
-    #         or text in [c.value for c in MainMenuButtons] or text in [c.value for c in SubprocessMenu]:
-    #     """Другие команды если случайно текстовая команда бота прилетит которая не обрабатывается еще чтоб в ии не уходила"""
-
-    #     msg = await message.answer(
-    #         text="🤖",
-    #         reply_markup=get_persistent_main_menu()
-    #     )
-    #     msg1 = await message.answer(
-    #         text=f"Воспользуйтесь кнопками для заказа - они есть в --{CommandsBot.MENU.value}--"
-    #     )
-    #     add_message(global_msg_fast, user_id, msg)
-    #     add_message(global_msg_fast, user_id, msg1)
-    #     return
-
-
-
     else:
         """ Свободный текст / голос """
         await clear_messages(user_id, global_msg_fast)
@@ -412,6 +394,6 @@ async def handler_comands_or_simple_msg(message: Message, bot):
             text=f"Я пока не читаю свободный текст 🙈 Используй кнопки — они там: {CommandsBot.MENU.value}",
             reply_markup=reply_markup_to_send
         )
-        add_message(global_msg_fast, user_id, msg1)
+        # add_message(global_msg_fast, user_id, msg1)
         return
         # await get_answer_to_simple_text_from_AI(message, text, user_id)
