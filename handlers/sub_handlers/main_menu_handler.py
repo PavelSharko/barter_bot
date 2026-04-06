@@ -694,12 +694,12 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             warnings = ""
             if is_client:
                 warnings = (
-                    # f"!учтите что если испольнитель принял ваш запрос то чтобы \"{DealProcessButtons.CANCEL_DEAL}\" - потребуется его подтверждение\n\n"
-                    f"!Важно - не нажимайте {DealProcessButtons.SERVICE_DONE} - пока вы не получили услугу - потому что монеты у вас будут сразу списаны"
+                    # f"!учтите что если испольнитель принял ваш запрос то чтобы \"{DealProcessButtons.CANCEL_DEAL.value}\" - потребуется его подтверждение\n\n"
+                    f"!Важно - не нажимайте {DealProcessButtons.SERVICE_DONE.value} - пока вы не получили услугу - потому что монеты у вас будут сразу списаны"
                 )
             else:
                 warnings = (
-                    f"!Важно - не нажимайте {DealProcessButtons.CANCEL_DEAL} - если вы уже оказали услугу - потому что монеты вернуться заказчику при отмене"
+                    f"!Важно - не нажимайте {DealProcessButtons.CANCEL_DEAL.value} - если вы уже оказали услугу - потому что монеты вернуться заказчику при отмене"
                 )
 
             return (

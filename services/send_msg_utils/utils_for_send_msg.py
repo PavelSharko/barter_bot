@@ -47,7 +47,7 @@ async def send_message_with_retries(bot, user_id, part, reply_markup=None):
                 kwargs["reply_markup"] = reply_markup
 
             await bot.send_message(**kwargs)
-            await asyncio.sleep(config.ээ)
+            await asyncio.sleep(config.TIME_TO_SEND_MSG)
 
             logging.debug(f"{GREEN}Сообщение успешно отправлено на попытке {attempt}{RESET}.")
             await asyncio.sleep(5)  # задержка после успешной отправки
