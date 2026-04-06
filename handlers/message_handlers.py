@@ -168,30 +168,22 @@ def register_handlers(dp, bot):
             await handle_edit_temp_socials(message, state, user_id, bot)
 
         # FSM для редактирования конкретной услуги (3 шага)
-        elif current_command == ProcessChangingProfileButtons.EDIT_SERVICE_NAME_INPUT.value:
-            from services.comands.users_commands.edit_temp_profile_commands import handle_edit_service_name_input
-            await handle_edit_service_name_input(message, state, user_id)
-
-        elif current_command == ProcessChangingProfileButtons.EDIT_SERVICE_DESC_INPUT.value:
-            from services.comands.users_commands.edit_temp_profile_commands import handle_edit_service_desc_input
-            await handle_edit_service_desc_input(message, state, user_id)
-
-        elif current_command == ProcessChangingProfileButtons.EDIT_SERVICE_PRICE_INPUT.value:
-            from services.comands.users_commands.edit_temp_profile_commands import handle_edit_service_price_input
-            await handle_edit_service_price_input(message, state, user_id)
+        elif current_command in [
+            ProcessChangingProfileButtons.EDIT_SERVICE_NAME_INPUT.value,
+            ProcessChangingProfileButtons.EDIT_SERVICE_DESC_INPUT.value,
+            ProcessChangingProfileButtons.EDIT_SERVICE_PRICE_INPUT.value
+        ]:
+            from handlers.sub_handlers.edit_services_handler import facade_edit_service_input
+            await facade_edit_service_input(message, state, bot, current_command)
 
         # FSM для добавления новой услуги (3 шага)
-        elif current_command == ProcessChangingProfileButtons.ADD_SERVICE_NAME_INPUT.value:
-            from services.comands.users_commands.edit_temp_profile_commands import handle_add_service_name_input
-            await handle_add_service_name_input(message, state, user_id)
-
-        elif current_command == ProcessChangingProfileButtons.ADD_SERVICE_DESC_INPUT.value:
-            from services.comands.users_commands.edit_temp_profile_commands import handle_add_service_desc_input
-            await handle_add_service_desc_input(message, state, user_id)
-
-        elif current_command == ProcessChangingProfileButtons.ADD_SERVICE_PRICE_INPUT.value:
-            from services.comands.users_commands.edit_temp_profile_commands import handle_add_service_price_input
-            await handle_add_service_price_input(message, state, user_id)
+        elif current_command in [
+            ProcessChangingProfileButtons.ADD_SERVICE_NAME_INPUT.value,
+            ProcessChangingProfileButtons.ADD_SERVICE_DESC_INPUT.value,
+            ProcessChangingProfileButtons.ADD_SERVICE_PRICE_INPUT.value
+        ]:
+            from handlers.sub_handlers.edit_services_handler import facade_add_service_input
+            await facade_add_service_input(message, state, bot, current_command)
 
         elif current_command == ReviewProcessButtons.ADD_TEXT_REVIEW.name.lower():
             from services.comands.users_commands.review_text_commands import extract_and_save_review_text

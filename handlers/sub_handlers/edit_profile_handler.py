@@ -232,6 +232,8 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         await call.answer()
         return
 
+
+
     # ========================================================
     # 6. Услуги — показ списка
     # ========================================================
