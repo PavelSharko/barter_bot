@@ -175,7 +175,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         prompt = f"Текущее имя: <b>{html.escape(str(old_name))}</b>\n\nВведите новое имя (ФИО, минимум 2 слова):"
         msg = await call.message.answer(prompt, parse_mode="HTML", reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
-        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_NAME.value)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_NAME.value, timeout=config.TIME_TO_INPUT_MSG_FSM)
         await call.answer()
         return
 
@@ -187,7 +187,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         prompt = f"Текущий район: <b>{html.escape(str(old_area))}</b>\n\nВведите новый район:"
         msg = await call.message.answer(prompt, parse_mode="HTML", reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
-        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_AREA.value)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_AREA.value, timeout=config.TIME_TO_INPUT_MSG_FSM)
         await call.answer()
         return
 
@@ -199,7 +199,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         prompt = f"Текущая деятельность: <b>{html.escape(str(old_prof))}</b>\n\nВведите новое название деятельности (от 2 до 50 символов):"
         msg = await call.message.answer(prompt, parse_mode="HTML", reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
-        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_PROFESSION.value)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_PROFESSION.value, timeout=config.TIME_TO_INPUT_MSG_FSM)
         await call.answer()
         return
 
@@ -211,7 +211,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         prompt = f"Текущее описание:\n<i>{html.escape(str(old_desc))}</i>\n\nВведите новое описание (от 50 до 300 символов):"
         msg = await call.message.answer(prompt, parse_mode="HTML", reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
-        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_DESCRIPTION.value)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_DESCRIPTION.value, timeout=config.TIME_TO_INPUT_MSG_FSM)
         await call.answer()
         return
 
@@ -224,7 +224,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         prompt = f"Текущие ссылки:\n{html.escape(old_links_text)}\n\nВведите новые ссылки (от 1 до 10, через пробел или перенос строки):"
         msg = await call.message.answer(prompt, parse_mode="HTML", reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
-        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_SOCIALS.value)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_SOCIALS.value, timeout=config.TIME_TO_INPUT_MSG_FSM)
         await call.answer()
         return
 
@@ -316,7 +316,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         )
         msg = await call.message.answer(prompt, parse_mode="HTML", reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
-        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_SERVICE_NAME_INPUT.value)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_SERVICE_NAME_INPUT.value, timeout=config.TIME_TO_INPUT_MSG_FSM)
         # Восстанавливаем editing_service_idx после set_waiting_input (он делает state.clear)
         await state.update_data(editing_service_idx=service_idx)
         await call.answer()
@@ -369,7 +369,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         prompt = "Введите название новой услуги (от 2 до 50 символов):"
         msg = await call.message.answer(prompt, reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
-        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.ADD_SERVICE_NAME_INPUT.value)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.ADD_SERVICE_NAME_INPUT.value, timeout=config.TIME_TO_INPUT_MSG_FSM)
         await call.answer()
         return
 

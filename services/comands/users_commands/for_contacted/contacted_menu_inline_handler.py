@@ -47,12 +47,12 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
         return
 
     if call.data == ProfileRegistration_Menu.ENTER_NAME_PROFESSION.name.lower():
-        await call.answer(text="Указываем товар/услугу 🛒", show_alert=False)
+        await call.answer(text="Указываем деятельность 🛒", show_alert=False)
         command_name = ProfileRegistration_Menu.ENTER_NAME_PROFESSION.value.lower()
         await set_waiting_input(state, bot, chat_id, user_id, command_name, timeout=time_for_input_words)
         msg = await bot.send_message(
             chat_id=chat_id,
-            text="🛒 Скажите, как называется товар/услуга, которую вы предоставляете?"
+            text="🛒 Напишите, как называется ваша профессия(сфера деятельности) ?"
         )
         add_message(global_msg_contacted_fast, user_id, msg)
         return

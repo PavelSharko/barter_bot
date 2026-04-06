@@ -63,7 +63,7 @@ async def facade_add_service_input(message: Message, state: FSMContext, bot: Bot
         )
         msg = await message.answer(prompt, reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
-        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.ADD_SERVICE_DESC_INPUT.value)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.ADD_SERVICE_DESC_INPUT.value, timeout=config.TIME_TO_INPUT_MSG_FSM)
         await state.update_data(new_service_name=text)
 
     elif current_command == ProcessChangingProfileButtons.ADD_SERVICE_DESC_INPUT.value:
@@ -83,7 +83,7 @@ async def facade_add_service_input(message: Message, state: FSMContext, bot: Bot
         )
         msg = await message.answer(prompt, reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
-        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.ADD_SERVICE_PRICE_INPUT.value)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.ADD_SERVICE_PRICE_INPUT.value, timeout=config.TIME_TO_INPUT_MSG_FSM)
         await state.update_data(new_service_name=service_name, new_service_desc=text)
 
     elif current_command == ProcessChangingProfileButtons.ADD_SERVICE_PRICE_INPUT.value:
@@ -172,7 +172,7 @@ async def facade_edit_service_input(message: Message, state: FSMContext, bot: Bo
         )
         msg = await message.answer(prompt, parse_mode="HTML", reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
-        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_SERVICE_DESC_INPUT.value)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_SERVICE_DESC_INPUT.value, timeout=config.TIME_TO_INPUT_MSG_FSM)
         await state.update_data(editing_service_idx=service_idx, editing_service_name=text)
 
     elif current_command == ProcessChangingProfileButtons.EDIT_SERVICE_DESC_INPUT.value:
@@ -192,7 +192,7 @@ async def facade_edit_service_input(message: Message, state: FSMContext, bot: Bo
         )
         msg = await message.answer(prompt, reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
-        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_SERVICE_PRICE_INPUT.value)
+        await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_SERVICE_PRICE_INPUT.value, timeout=config.TIME_TO_INPUT_MSG_FSM)
         await state.update_data(
             editing_service_idx=service_idx,
             editing_service_name=editing_service_name,

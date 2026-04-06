@@ -165,7 +165,7 @@ async def set_waiting_input(
         chat_id: int,
         user_id: int,
         command_name: str,
-        timeout: int = 60
+        timeout: int = config.TIME_TO_INPUT_MSG_FSM
 ):
     """
     Устанавливает состояние ожидания ввода данных от пользователя.
