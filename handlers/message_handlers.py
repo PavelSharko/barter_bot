@@ -157,15 +157,15 @@ def register_handlers(dp, bot):
 
         elif current_command == ProcessChangingProfileButtons.EDIT_PROFESSION.value:
             from services.comands.users_commands.edit_temp_profile_commands import handle_edit_temp_profession
-            await handle_edit_temp_profession(message, state, user_id)
+            await handle_edit_temp_profession(message, state, user_id, bot)
 
         elif current_command == ProcessChangingProfileButtons.EDIT_DESCRIPTION.value:
             from services.comands.users_commands.edit_temp_profile_commands import handle_edit_temp_description
-            await handle_edit_temp_description(message, state, user_id)
+            await handle_edit_temp_description(message, state, user_id, bot)
 
         elif current_command == ProcessChangingProfileButtons.EDIT_SOCIALS.value:
             from services.comands.users_commands.edit_temp_profile_commands import handle_edit_temp_socials
-            await handle_edit_temp_socials(message, state, user_id)
+            await handle_edit_temp_socials(message, state, user_id, bot)
 
         # FSM для редактирования конкретной услуги (3 шага)
         elif current_command == ProcessChangingProfileButtons.EDIT_SERVICE_NAME_INPUT.value:

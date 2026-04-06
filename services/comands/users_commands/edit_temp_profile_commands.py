@@ -231,6 +231,7 @@ async def handle_add_service_price_input(message, state, user_id):
 async def handle_edit_temp_name(message, state, user_id, bot):
     """Редактирование имени через временный профиль."""
     if await check_cancel_input(message.text, message, state):
+        await clear_messages(user_id, global_msg_fast)
         await clear_waiting_input(state, message.chat.id, message.from_user.id)
         msg = await bot.send_message(chat_id = user_id, text = "Вы в режиме редактирования профиля",
             reply_markup=get_keyboard_for_changing_profile()
@@ -272,6 +273,7 @@ async def handle_edit_temp_name(message, state, user_id, bot):
 async def handle_edit_temp_area(message, state, user_id, bot):
     """Редактирование района через временный профиль."""
     if await check_cancel_input(message.text, message, state):
+        await clear_messages(user_id, global_msg_fast)
         await clear_waiting_input(state, message.chat.id, message.from_user.id)
         msg = await bot.send_message(chat_id = user_id, text = "Вы в режиме редактирования профиля",
             reply_markup=get_keyboard_for_changing_profile()
@@ -306,8 +308,17 @@ async def handle_edit_temp_area(message, state, user_id, bot):
     add_message(global_msg_fast, user_id, msg)
 
 
-async def handle_edit_temp_profession(message, state, user_id):
+async def handle_edit_temp_profession(message, state, user_id, bot):
     """Редактирование деятельности через временный профиль."""
+
+    if await check_cancel_input(message.text, message, state):
+        await clear_messages(user_id, global_msg_fast)
+        await clear_waiting_input(state, message.chat.id, message.from_user.id)
+        msg = await bot.send_message(chat_id = user_id, text = "Вы в режиме редактирования профиля",
+            reply_markup=get_keyboard_for_changing_profile()
+        )
+        add_message(global_msg_fast, user_id, msg)
+        return
     text = (message.text or "").strip()
     if not text:
         await _send_error(message, user_id, "Нужен текст")
@@ -329,8 +340,17 @@ async def handle_edit_temp_profession(message, state, user_id):
     add_message(global_msg_fast, user_id, msg)
 
 
-async def handle_edit_temp_description(message, state, user_id):
+async def handle_edit_temp_description(message, state, user_id, bot):
     """Редактирование описания (о себе) через временный профиль."""
+    if await check_cancel_input(message.text, message, state):
+        await clear_messages(user_id, global_msg_fast)
+        await clear_waiting_input(state, message.chat.id, message.from_user.id)
+        msg = await bot.send_message(chat_id = user_id, text = "Вы в режиме редактирования профиля",
+            reply_markup=get_keyboard_for_changing_profile()
+        )
+        add_message(global_msg_fast, user_id, msg)
+        return
+
     text = (message.text or "").strip()
     if not text:
         await _send_error(message, user_id, "Нужен текст")
@@ -352,8 +372,17 @@ async def handle_edit_temp_description(message, state, user_id):
     add_message(global_msg_fast, user_id, msg)
 
 
-async def handle_edit_temp_socials(message, state, user_id):
+async def handle_edit_temp_socials(message, state, user_id, bot):
     """Редактирование ссылок через временный профиль."""
+    if await check_cancel_input(message.text, message, state):
+        await clear_messages(user_id, global_msg_fast)
+        await clear_waiting_input(state, message.chat.id, message.from_user.id)
+        msg = await bot.send_message(chat_id = user_id, text = "Вы в режиме редактирования профиля",
+            reply_markup=get_keyboard_for_changing_profile()
+        )
+        add_message(global_msg_fast, user_id, msg)
+        return
+
     text = (message.text or "").strip()
     if not text:
         await _send_error(message, user_id, "Нужен текст")

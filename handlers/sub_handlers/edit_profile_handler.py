@@ -201,7 +201,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         temp = get_temp_profile(user_id) or {}
         old_prof = temp.get(UserProfileFields.PROFESSION.value, "Не указано")
         prompt = f"Текущая деятельность: <b>{html.escape(str(old_prof))}</b>\n\nВведите новое название деятельности (от 2 до 50 символов):"
-        msg = await call.message.answer(prompt, parse_mode="HTML")
+        msg = await call.message.answer(prompt, parse_mode="HTML", reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
         await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_PROFESSION.value)
         await call.answer()
@@ -213,7 +213,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         temp = get_temp_profile(user_id) or {}
         old_desc = temp.get(UserProfileFields.DESCRIPTION_PROFESSION.value, "Не указано")
         prompt = f"Текущее описание:\n<i>{html.escape(str(old_desc))}</i>\n\nВведите новое описание (от 50 до 300 символов):"
-        msg = await call.message.answer(prompt, parse_mode="HTML")
+        msg = await call.message.answer(prompt, parse_mode="HTML", reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
         await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_DESCRIPTION.value)
         await call.answer()
@@ -226,7 +226,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         old_links = temp.get(UserProfileFields.SOCIAL_LINKS.value, [])
         old_links_text = "\n".join(old_links) if old_links else "Не указано"
         prompt = f"Текущие ссылки:\n{html.escape(old_links_text)}\n\nВведите новые ссылки (от 1 до 10, через пробел или перенос строки):"
-        msg = await call.message.answer(prompt, parse_mode="HTML")
+        msg = await call.message.answer(prompt, parse_mode="HTML", reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
         await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_SOCIALS.value)
         await call.answer()
