@@ -318,7 +318,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
             f"Ранее услуга называлась: <b>{old_name}</b>\n"
             f"Введите новое название:"
         )
-        msg = await call.message.answer(prompt, parse_mode="HTML")
+        msg = await call.message.answer(prompt, parse_mode="HTML", reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
         await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_SERVICE_NAME_INPUT.value)
         # Восстанавливаем editing_service_idx после set_waiting_input (он делает state.clear)
@@ -371,7 +371,7 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
     elif data == ProcessChangingProfileButtons.ADD_SERVICE.name.lower():
         await clear_messages(user_id, global_msg_fast)
         prompt = "Введите название новой услуги (от 2 до 50 символов):"
-        msg = await call.message.answer(prompt)
+        msg = await call.message.answer(prompt, reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
         await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.ADD_SERVICE_NAME_INPUT.value)
         await call.answer()

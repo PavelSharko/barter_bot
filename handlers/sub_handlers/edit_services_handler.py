@@ -5,9 +5,10 @@ import html
 
 from services.keyboards.bot_all_buttons import ProcessChangingProfileButtons
 from services.keyboards.edit_profile_keyboards import get_keyboard_for_changing_profile, get_services_footer_keyboard, get_service_edit_keyboard
+from services.keyboards.creator_persistent_keyboards import get_cancel_keyboard
 from services.state_bot.global_store import add_message, global_msg_fast
 from services.msgs_utils.deleter_messages import clear_messages
-from handlers.fsm_utils import set_waiting_input, clear_waiting_input
+from handlers.fsm_utils import set_waiting_input, clear_waiting_input, check_cancel_input
 from services.users_utils.temp_profile_manager import get_temp_profile, update_temp_profile
 from entity.Enums_entity import UserProfileFields
 
@@ -25,6 +26,19 @@ async def facade_add_service_input(message: Message, state: FSMContext, bot: Bot
     user_id = message.from_user.id
     chat_id = message.chat.id
     text = (message.text or "").strip()
+
+    # --- Проверка отмены ---
+    if await check_cancel_input(message.text, message, state):
+        await clear_messages(user_id, global_msg_fast)
+        await clear_waiting_input(state, chat_id, user_id)
+        # Очищаем специфичные переменные рантайма
+        await state.update_data(new_service_name=None, new_service_desc=None)
+
+        msg = await bot.send_message(chat_id = user_id, text = "Вы в режиме редактирования профиля",
+            reply_markup=get_keyboard_for_changing_profile()
+        )
+        add_message(global_msg_fast, user_id, msg)
+        return
 
     if not text:
         await _send_error(message, user_id, "Нужен текст — картинки и файлы здесь не подойдут 🙏")
@@ -47,7 +61,7 @@ async def facade_add_service_input(message: Message, state: FSMContext, bot: Bot
             "⚠️ Пожалуйста, не пишите в этом разделе цену — для неё будет отдельный шаг.\n\n"
             "Описание должно быть от 50 до 300 символов."
         )
-        msg = await message.answer(prompt)
+        msg = await message.answer(prompt, reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
         await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.ADD_SERVICE_DESC_INPUT.value)
         await state.update_data(new_service_name=text)
@@ -67,7 +81,7 @@ async def facade_add_service_input(message: Message, state: FSMContext, bot: Bot
             f"Укажите прайс в долларах целым числом (от 1 до 200) — 1$ = 1 монета клуба 🪙\n\n"
             f"Цену здесь лучше поставить такую же, как вне клуба, или чуть ниже — но не выше 😊"
         )
-        msg = await message.answer(prompt)
+        msg = await message.answer(prompt, reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
         await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.ADD_SERVICE_PRICE_INPUT.value)
         await state.update_data(new_service_name=service_name, new_service_desc=text)
@@ -112,6 +126,19 @@ async def facade_edit_service_input(message: Message, state: FSMContext, bot: Bo
     chat_id = message.chat.id
     text = (message.text or "").strip()
 
+    # --- Проверка отмены ---
+    if await check_cancel_input(message.text, message, state):
+        await clear_messages(user_id, global_msg_fast)
+        await clear_waiting_input(state, chat_id, user_id)
+        # Очищаем специфичные переменные рантайма
+        await state.update_data(editing_service_idx=None, editing_service_name=None, editing_service_desc=None)
+
+        msg = await bot.send_message(chat_id = user_id, text = "Вы в режиме редактирования профиля",
+            reply_markup=get_keyboard_for_changing_profile()
+        )
+        add_message(global_msg_fast, user_id, msg)
+        return
+
     if not text:
         await _send_error(message, user_id, "Нужен текст — картинки и файлы здесь не подойдут 🙏")
         return
@@ -139,7 +166,7 @@ async def facade_edit_service_input(message: Message, state: FSMContext, bot: Bo
             f"Ранее услуга описывалась так:\n<i>{old_desc}</i>\n\n"
             f"Введите новое описание (от 50 до 300 символов):"
         )
-        msg = await message.answer(prompt, parse_mode="HTML")
+        msg = await message.answer(prompt, parse_mode="HTML", reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
         await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_SERVICE_DESC_INPUT.value)
         await state.update_data(editing_service_idx=service_idx, editing_service_name=text)
@@ -159,7 +186,7 @@ async def facade_edit_service_input(message: Message, state: FSMContext, bot: Bo
             f"Теперь введите цену услуги в долларах (целое число от 1 до 200).\n"
             f"1$ = 1 монета клуба 🪙"
         )
-        msg = await message.answer(prompt)
+        msg = await message.answer(prompt, reply_markup=get_cancel_keyboard())
         add_message(global_msg_fast, user_id, msg)
         await set_waiting_input(state, bot, chat_id, user_id, ProcessChangingProfileButtons.EDIT_SERVICE_PRICE_INPUT.value)
         await state.update_data(
