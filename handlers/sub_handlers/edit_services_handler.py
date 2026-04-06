@@ -11,6 +11,7 @@ from services.msgs_utils.deleter_messages import clear_messages
 from handlers.fsm_utils import set_waiting_input, clear_waiting_input, check_cancel_input
 from services.users_utils.temp_profile_manager import get_temp_profile, update_temp_profile
 from entity.Enums_entity import UserProfileFields
+from initApp.config_loader import config
 
 async def _send_error(message, user_id, text):
     msg = await message.answer(f"❌ {text}")
