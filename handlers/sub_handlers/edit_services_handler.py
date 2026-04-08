@@ -79,7 +79,7 @@ async def facade_add_service_input(message: Message, state: FSMContext, bot: Bot
 
         prompt = (
             f"✅ Описание добавлено!\n\n"
-            f"Укажите прайс в долларах целым числом (от 1 до 200) — 1$ = 1 монета клуба 🪙\n\n"
+            f"Укажите прайс в долларах целым числом (от 1 до 1000) — 1$ = 1 монета клуба 🪙\n\n"
             f"Цену здесь лучше поставить такую же, как вне клуба, или чуть ниже — но не выше 😊"
         )
         msg = await message.answer(prompt, reply_markup=get_cancel_keyboard())
@@ -93,8 +93,8 @@ async def facade_add_service_input(message: Message, state: FSMContext, bot: Bot
             return
 
         price_val = int(text)
-        if not (1 <= price_val <= 200):
-            await _send_error(message, user_id, "Ошибка: цена услуги должна быть от 1 до 200 монет")
+        if not (1 <= price_val <= 1000):
+            await _send_error(message, user_id, "Ошибка: цена услуги должна быть от 1 до 1000 монет")
             return
 
         service_name = fsm_data.get("new_service_name", "Услуга")
@@ -188,7 +188,7 @@ async def facade_edit_service_input(message: Message, state: FSMContext, bot: Bo
 
         prompt = (
             f"✅ Описание сохранено!\n\n"
-            f"Теперь введите цену услуги в долларах (целое число от 1 до 200).\n"
+            f"Теперь введите цену услуги в долларах (целое число от 1 до 1000).\n"
             f"1$ = 1 монета клуба 🪙"
         )
         msg = await message.answer(prompt, reply_markup=get_cancel_keyboard())
@@ -206,8 +206,8 @@ async def facade_edit_service_input(message: Message, state: FSMContext, bot: Bo
             return
 
         price_val = int(text)
-        if not (1 <= price_val <= 200):
-            await _send_error(message, user_id, "Ошибка: цена услуги должна быть от 1 до 200 монет")
+        if not (1 <= price_val <= 1000):
+            await _send_error(message, user_id, "Ошибка: цена услуги должна быть от 1 до 1000 монет")
             return
 
         editing_service_name = fsm_data.get("editing_service_name", "Услуга")

@@ -184,7 +184,7 @@ async def extract_and_save_service_desc(message, state, user_id):
     await clear_waiting_input(state, message.chat.id, user_id)
 
     msg = await message.answer(
-        text=f"✅ Описание добавлено!\n\nУкажите прайс в долларах целым числом (от 1 до 200) — 1$ = 1 монета клуба 🪙\n\nЦену здесь лучше поставить такую же, как вне клуба, или чуть ниже — но не выше 😊",
+        text=f"✅ Описание добавлено!\n\nУкажите прайс в долларах целым числом (от 1 до 1000) — 1$ = 1 монета клуба 🪙\n\nЦену здесь лучше поставить такую же, как вне клуба, или чуть ниже — но не выше 😊",
         reply_markup=get_price_keyboard()
     )
     add_message(global_msg_contacted_fast, user_id, msg)
@@ -198,8 +198,8 @@ async def extract_and_save_price(message, state, user_id):
         return
         
     price_val = int(text)
-    if not (1 <= price_val <= 200):
-        await send_error(message, user_id, "Ошибка: цена услуги должна быть от 1 до 200 монет")
+    if not (1 <= price_val <= 1000):
+        await send_error(message, user_id, "Ошибка: цена услуги должна быть от 1 до 1000 монет")
         return
 
     profile = get_profile(user_id) or {}

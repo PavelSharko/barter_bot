@@ -59,7 +59,13 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             f"**Район:** {user_profile.get(UserProfileFields.AREA.value, 'Не указано')}\n"
             f"**О себе:** {user_profile.get(UserProfileFields.DESCRIPTION_PROFESSION.value, 'Не указано')}\n\n"
         )
-        
+        social_links = user_profile.get(UserProfileFields.SOCIAL_LINKS.value, [])
+        if social_links:
+            text += "**Ссылки (социальные сети, портфолио):**\n"
+            for link in social_links:
+                text += f"• {link}\n"
+            text += "\n"
+            
         services = user_profile.get(UserProfileFields.SERVICES.value, [])
         if services:
             text += "**Ваши услуги:**\n"
@@ -249,7 +255,13 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             f"<b>Деятельность:</b> {html.escape(str(target_profile.get(UserProfileFields.PROFESSION.value, 'Не указано')))}\n"
             f"<b>О себе:</b> {html.escape(str(target_profile.get(UserProfileFields.DESCRIPTION_PROFESSION.value, 'Не указано')))}\n\n"
         )
-        
+        social_links = target_profile.get(UserProfileFields.SOCIAL_LINKS.value, [])
+        if social_links:
+            text += "<b>Ссылки (социальные сети, портфолио):</b>\n"
+            for link in social_links:
+                text += f"• {html.escape(str(link))}\n"
+            text += "\n"
+            
         services = target_profile.get(UserProfileFields.SERVICES.value, [])
         if services:
             text += "<b>Услуги:</b>\n"

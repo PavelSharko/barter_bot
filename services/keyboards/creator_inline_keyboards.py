@@ -58,7 +58,7 @@ def get_menu_keyboard_for_developer() -> InlineKeyboardMarkup:
 
 
 def get_find_service_keyboard(user_id: int = None) -> InlineKeyboardMarkup:
-    """Создаёт клавиатуру со списком доступных услуг подтвержденных клиентов."""
+    """Создаёт клавиатуру со списком доступных профессий подтвержденных клиентов."""
     from services.users_utils.all_users_manager import load_all_users
     from services.users_utils.user_profile_manager import load_profiles
     from entity.Enums_entity import UserFields, UserLifecycleStatus, UserProfileFields
@@ -80,7 +80,7 @@ def get_find_service_keyboard(user_id: int = None) -> InlineKeyboardMarkup:
                     user_name = f"(я) {user_name}"
                 
                 if profession:
-                    button_text = f"{user_name}: {profession}"
+                    button_text = f"{profession}: {user_name}"
                 else:
                     button_text = user_name
                 
