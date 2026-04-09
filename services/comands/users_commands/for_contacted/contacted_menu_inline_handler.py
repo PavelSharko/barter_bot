@@ -243,5 +243,13 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
             )
         except Exception as e:
             print(f"Ошибка отправки модератору: {e}")
+            try:
+                await bot.send_message(
+                    chat_id=config.DEVELOPER_CHAT_ID,
+                    text=f"🚨 <b>Ахтунг!</b> Ошибка отправки <b>НОВОЙ</b> анкеты модератору!\nUser ID: <code>{user_id}</code>\nОшибка: {html.escape(str(e))}",
+                    parse_mode="HTML"
+                )
+            except Exception as e2:
+                print(f"Даже разработчику не ушло: {e2}")
             
         return
