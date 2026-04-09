@@ -164,14 +164,27 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
         else:
             text += "<b>Услуги отсутствуют.</b>\n"
 
-        msg = await bot.send_message(
-            chat_id=chat_id,
-            text=text,
-            parse_mode="HTML",
-            reply_markup=get_profile_review_keyboard()
-        )
+        MAX_LEN = 3500
+        parts = []
+        current_part = ""
+        for line in text.split('\n'):
+            if len(current_part) + len(line) + 1 > MAX_LEN:
+                parts.append(current_part)
+                current_part = line + '\n'
+            else:
+                current_part += line + '\n'
+        if current_part.strip():
+            parts.append(current_part)
 
-        add_message(global_msg_contacted_fast, user_id, msg)
+        for i, part in enumerate(parts):
+            markup = get_profile_review_keyboard() if i == len(parts) - 1 else None
+            msg = await bot.send_message(
+                chat_id=chat_id,
+                text=part,
+                parse_mode="HTML",
+                reply_markup=markup
+            )
+            add_message(global_msg_contacted_fast, user_id, msg)
         return
 
     if call.data == ProfileRegistration_Menu.RESTART_PROFILE.name.lower():
@@ -233,14 +246,28 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
         else:
             moderator_text += "<b>Услуги отсутствуют.</b>\n"
 
+        MAX_LEN = 3500
+        parts = []
+        current_part = ""
+        for line in moderator_text.split('\n'):
+            if len(current_part) + len(line) + 1 > MAX_LEN:
+                parts.append(current_part)
+                current_part = line + '\n'
+            else:
+                current_part += line + '\n'
+        if current_part.strip():
+            parts.append(current_part)
+
         # Отправляем модератору
         try:
-            await bot.send_message(
-                chat_id=config.MODERATOR_CONTACT_ID,
-                text=moderator_text,
-                parse_mode="HTML",
-                reply_markup=get_moderator_approval_keyboard(user_id)
-            )
+            for i, part in enumerate(parts):
+                markup = get_moderator_approval_keyboard(user_id) if i == len(parts) - 1 else None
+                await bot.send_message(
+                    chat_id=config.MODERATOR_CONTACT_ID,
+                    text=part,
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
         except Exception as e:
             print(f"Ошибка отправки модератору: {e}")
             try:

@@ -77,12 +77,26 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         else:
             text += "**Услуги отсутствуют.**\n"
         
-        msg = await call.message.answer(
-            text,
-            reply_markup=get_profile_view_keyboard(),
-            parse_mode="Markdown"
-        )
-        add_message(global_msg_fast, user_id, msg)
+        MAX_LEN = 3500
+        parts = []
+        current_part = ""
+        for line in text.split('\n'):
+            if len(current_part) + len(line) + 1 > MAX_LEN:
+                parts.append(current_part)
+                current_part = line + '\n'
+            else:
+                current_part += line + '\n'
+        if current_part.strip():
+            parts.append(current_part)
+
+        for i, part in enumerate(parts):
+            markup = get_profile_view_keyboard() if i == len(parts) - 1 else None
+            msg = await call.message.answer(
+                part,
+                reply_markup=markup,
+                parse_mode="Markdown"
+            )
+            add_message(global_msg_fast, user_id, msg)
         return
 
     # 2. Мой баланс
@@ -271,13 +285,26 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
                 text += f"   <i>Прайс</i>: {html.escape(str(s.get('price', '')))}\n\n"
         else:
             text += "<b>Услуги отсутствуют.</b>\n"
+        MAX_LEN = 3500
+        parts = []
+        current_part = ""
+        for line in text.split('\n'):
+            if len(current_part) + len(line) + 1 > MAX_LEN:
+                parts.append(current_part)
+                current_part = line + '\n'
+            else:
+                current_part += line + '\n'
+        if current_part.strip():
+            parts.append(current_part)
             
-        msg = await call.message.answer(
-            text,
-            reply_markup=get_service_profile_keyboard(target_id_str),
-            parse_mode="HTML"
-        )
-        add_message(global_msg_fast, user_id, msg)
+        for i, part in enumerate(parts):
+            markup = get_service_profile_keyboard(target_id_str) if i == len(parts) - 1 else None
+            msg = await call.message.answer(
+                part,
+                reply_markup=markup,
+                parse_mode="HTML"
+            )
+            add_message(global_msg_fast, user_id, msg)
         return
 
     # 5.2 Просмотр отзывов чужого профиля

@@ -18,7 +18,7 @@ async def start_background_tasks(loop, bot):
 
     Все фоновые задачи создаются через loop.create_task для асинхронного и неблокирующего выполнения.
     """
-    await download_db_folder()
+    # await download_db_folder()
     loop.create_task(delayed_startup_message(bot))
     loop.create_task(run_registration_reminders(bot))
     loop.create_task(run_auto_cancel_deals(bot))

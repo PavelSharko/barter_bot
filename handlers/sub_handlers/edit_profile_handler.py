@@ -124,13 +124,27 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
             f"{diff_text}"
         )
 
+        MAX_LEN = 3500
+        parts = []
+        current_part = ""
+        for line in moderator_text.split('\n'):
+            if len(current_part) + len(line) + 1 > MAX_LEN:
+                parts.append(current_part)
+                current_part = line + '\n'
+            else:
+                current_part += line + '\n'
+        if current_part.strip():
+            parts.append(current_part)
+
         try:
-            await bot.send_message(
-                chat_id=config.MODERATOR_CONTACT_ID,
-                text=moderator_text,
-                parse_mode="HTML",
-                reply_markup=get_moderator_approval_changes_keyboard(user_id)
-            )
+            for i, part in enumerate(parts):
+                markup = get_moderator_approval_changes_keyboard(user_id) if i == len(parts) - 1 else None
+                await bot.send_message(
+                    chat_id=config.MODERATOR_CONTACT_ID,
+                    text=part,
+                    parse_mode="HTML",
+                    reply_markup=markup
+                )
         except Exception as e:
             print(f"Ошибка отправки модератору: {e}")
             try:
