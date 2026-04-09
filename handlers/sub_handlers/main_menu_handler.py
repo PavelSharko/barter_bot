@@ -63,7 +63,8 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         if social_links:
             text += "**Ссылки (социальные сети, портфолио):**\n"
             for link in social_links:
-                text += f"• {link}\n"
+                escaped_link = str(link).replace('_', '\\_').replace('*', '\\*').replace('[', '\\[').replace(']', '\\]')
+                text += f"• {escaped_link}\n"
             text += "\n"
             
         services = user_profile.get(UserProfileFields.SERVICES.value, [])
