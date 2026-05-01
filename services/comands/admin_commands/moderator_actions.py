@@ -195,8 +195,17 @@ async def handle_category_selection(call: CallbackQuery, bot: Bot):
 
     if not target_data:
         await call.answer("❌ Ошибка: не выбран пользователь.", show_alert=True)
-        await call.message.delete()
+        try:
+            await call.message.delete()
+        except:
+            pass
         return
+
+    if target_data.get('is_processing'):
+        await call.answer("⏳ Заявка уже обрабатывается...", show_alert=True)
+        return
+        
+    target_data['is_processing'] = True
 
     target_user_id = target_data.get('user_id')
     origin_msg_id = target_data.get('message_id')
@@ -216,77 +225,95 @@ async def handle_category_selection(call: CallbackQuery, bot: Bot):
          await call.answer("⚠️ Ошибка при выборе категории — попробуй ещё раз.", show_alert=True)
          return
 
-    users = load_all_users()
-    if target_user_id not in users:
-        if str(target_user_id) in users:
-            target_user_id = str(target_user_id)
-        else:
-            await call.answer("Пользователь не найден в базе", show_alert=True)
+    try:
+        users = load_all_users()
+        if target_user_id not in users:
+            if str(target_user_id) in users:
+                target_user_id = str(target_user_id)
+            else:
+                await call.answer("Пользователь не найден в базе", show_alert=True)
+                target_data['is_processing'] = False
+                return
+
+        # 1. Обновляем данные пользователя
+        if users[target_user_id].get(UserFields.STATUS.value) == UserLifecycleStatus.CLIENT.value:
+            await call.answer("⚠️ Пользователь уже был одобрен ранее!", show_alert=True)
+            acceptance_targets.pop(admin_id, None)
             return
 
-    # 1. Обновляем данные пользователя
-    users[target_user_id][UserFields.STATUS.value] = UserLifecycleStatus.CLIENT.value
-    users[target_user_id][UserFields.CATEGORY.value] = selected_value
-    
-    current_balance = users[target_user_id].get(UserMetrics.BALANCE.value, 0)
-    users[target_user_id][UserMetrics.BALANCE.value] = current_balance + selected_value
-    
-    save_all_users()
+        users[target_user_id][UserFields.STATUS.value] = UserLifecycleStatus.CLIENT.value
+        users[target_user_id][UserFields.CATEGORY.value] = selected_value
+        
+        current_balance = users[target_user_id].get(UserMetrics.BALANCE.value, 0)
+        users[target_user_id][UserMetrics.BALANCE.value] = current_balance + selected_value
+        
+        save_all_users()
 
-    # 2. Уведомляем пользователя
-    try:
-        msg = await bot.send_message(
-            chat_id=int(target_user_id),
-            text=(
-                "🎉 <b>Добро пожаловать в клуб!</b>\n\n"
-                "Твоя анкета одобрена — ты теперь полноправный участник 🌴\n\n"
-                f"Категория: <b>{selected_value}</b>\n"
-                f"Приветственный бонус: <b>{selected_value} 🪙</b>\n\n"
-                "Открывай меню и начинай обмениваться!"
-            ),
-            parse_mode="HTML",
-            reply_markup=get_persistent_main_menu()
-        )
-        # add_message(global_msg_fast, int(target_user_id), msg)
-    except Exception as e:
-        await call.answer(f"⚠️ Пользователь одобрён, но уведомление не доставлено: {e}", show_alert=True)
-
-    # 3. Обновляем сообщение администратора (меню категорий)
-    try:
-        await call.message.delete()
-    except Exception:
-        pass
-    
-    try:
-        await call.answer(f"✅ Категория «{selected_value}» назначена.")
-    except Exception:
-        pass
-
-    # 4. Обновляем ИСХОДНОЕ сообщение заявки
-    if origin_msg_id:
-        new_text = f"{origin_text}\n\n✅ **ЗАЯВКА ПРИНЯТА**\nКатегория: {selected_value}"
+        # 2. Уведомляем пользователя
         try:
-             if is_caption:
-                 await bot.edit_message_caption(
-                     chat_id=call.message.chat.id,
-                     message_id=origin_msg_id,
-                     caption=new_text,
-                     reply_markup=None
-                 )
-             else:
-                 await bot.edit_message_text(
-                     chat_id=call.message.chat.id,
-                     message_id=origin_msg_id,
-                     text=new_text,
-                     reply_markup=None
-                 )
+            msg = await bot.send_message(
+                chat_id=int(target_user_id),
+                text=(
+                    "🎉 <b>Добро пожаловать в клуб!</b>\n\n"
+                    "Твоя анкета одобрена — ты теперь полноправный участник 🌴\n\n"
+                    f"Категория: <b>{selected_value}</b>\n"
+                    f"Приветственный бонус: <b>{selected_value} 🪙</b>\n\n"
+                    "Открывай меню и начинай обмениваться!"
+                ),
+                parse_mode="HTML",
+                reply_markup=get_persistent_main_menu()
+            )
+            # add_message(global_msg_fast, int(target_user_id), msg)
+        except Exception as e:
+            await call.answer("⚠️ Пользователь одобрён, но уведомление не доставлено", show_alert=True)
+            try:
+                await bot.send_message(
+                    chat_id=config.DEVELOPER_CHAT_ID,
+                    text=f"🚨 <b>Ахтунг!</b> Клиент <code>{target_user_id}</code> одобрен, но бот не смог отправить ему уведомление.\nОшибка: {e}",
+                    parse_mode="HTML"
+                )
+            except:
+                pass
+
+        # 3. Обновляем сообщение администратора (меню категорий)
+        try:
+            await call.message.delete()
         except Exception:
-             pass
+            pass
+        
+        try:
+            await call.answer(f"✅ Категория «{selected_value}» назначена.")
+        except Exception:
+            pass
 
+        # 4. Обновляем ИСХОДНОЕ сообщение заявки
+        if origin_msg_id:
+            new_text = f"{origin_text}\n\n✅ **ЗАЯВКА ПРИНЯТА**\nКатегория: {selected_value}"
+            try:
+                 if is_caption:
+                     await bot.edit_message_caption(
+                         chat_id=call.message.chat.id,
+                         message_id=origin_msg_id,
+                         caption=new_text,
+                         reply_markup=None
+                     )
+                 else:
+                     await bot.edit_message_text(
+                         chat_id=call.message.chat.id,
+                         message_id=origin_msg_id,
+                         text=new_text,
+                         reply_markup=None
+                     )
+            except Exception:
+                 pass
 
+        # Чистим хранилище
+        acceptance_targets.pop(admin_id, None)
 
-    # Чистим хранилище
-    acceptance_targets.pop(admin_id, None)
+    except Exception as general_e:
+        target_data['is_processing'] = False
+        print(f"Критическая ошибка при назначении категории: {general_e}")
+        await call.answer("❌ Произошла системная ошибка. Попробуйте еще раз.", show_alert=True)
 
 # Локальное хранилище для процесса отказа изменений
 rejection_changes_targets: dict[int, dict] = {}
