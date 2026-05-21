@@ -190,9 +190,18 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
     if call.data == ProfileRegistration_Menu.RESTART_PROFILE.name.lower():
         await call.answer("Заполняем заново 🔄")
         from services.keyboards.keyboards_for_registration import get_full_name_keyboard
+        from services.users_utils.user_profile_manager import create_or_update_profile
+        from entity.Enums_entity import UserProfileFields
+        
+        # Сброс старых данных анкеты перед новым заполнением
+        await create_or_update_profile(user_id, {
+            UserProfileFields.SERVICES.value: [],
+            UserProfileFields.SOCIAL_LINKS.value: [],
+            UserProfileFields.TEMP_SERVICE.value: {}
+        })
+        
         msg = await bot.send_message(chat_id, "🔄 Хорошо, давайте заполним анкету заново. Введите ФИО:", reply_markup=get_full_name_keyboard())
         add_message(global_msg_contacted_fast, user_id, msg)
-        # Сброс состояния? Можно, но extract_and_save_full_name очистит.
         return
 
     if call.data == ProfileRegistration_Menu.SEND_TO_REVIEW.name.lower():

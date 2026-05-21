@@ -116,9 +116,10 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
         
         for u_id, u_data in users.items():
             balance = u_data.get(UserMetrics.BALANCE.value, 0)
+            block_balance = u_data.get(UserMetrics.BLOCK_BALANCE.value, 0)
             total_balance += balance
             
-            if balance == 0:
+            if balance == 0 and block_balance == 0:
                 continue
                 
             # Попытка получить имя из профиля, если его нет - берём из users
@@ -127,13 +128,16 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             if not name:
                 name = u_data.get(UserFields.NAME_REAL.value) or u_data.get(UserFields.NAME_TG.value) or f"ID{u_id}"
                 
-            user_balances.append((name, balance))
+            user_balances.append((name, balance, block_balance))
             
         user_balances.sort(key=lambda x: x[1], reverse=True)
         
         text = f"<b>ОБЩИЙ БАЛАНС МОНЕТ В КЛУБЕ 🪙 - {total_balance:g}</b>\n\n"
-        for name, balance in user_balances:
-            text += f"- {html.escape(str(name))} - {balance:g} монет\n"
+        for name, balance, block_balance in user_balances:
+            if block_balance > 0:
+                text += f"- {html.escape(str(name))} - {balance:g} монет (из них в сделках: {block_balance:g} 🔒)\n"
+            else:
+                text += f"- {html.escape(str(name))} - {balance:g} монет\n"
             
         msg = await call.message.answer(
             text, 

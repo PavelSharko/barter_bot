@@ -3,6 +3,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.types import CallbackQuery
 from filelock import FileLock
 import html
+from datetime import datetime
 
 from entity.Enums_entity import DealStatus, DealFields, UserFields, UserMetrics, UserProfileFields
 from services.keyboards.bot_all_buttons import DealProcessButtons, CommandsBot, MainMenuButtons
@@ -223,8 +224,11 @@ async def handle_deal_process_callbacks(call: CallbackQuery, bot: Bot, state: FS
         server_commission = round(price_in_coins * 0.1, 2)
 
         # Обновляем структуру сделки
+        current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         deal[DealFields.STATUS_DEAL.value] = DealStatus.FINISHED.value
         deal[DealFields.REVIEW_ALREADY_LEFT.value] = False
+        deal[DealFields.UPDATED_AT.value] = current_time
+        deal[DealFields.DATA_CONFIRMED_AT.value] = current_time
         save_deals_locked(deals)
 
         # Проводим балансовые операции
