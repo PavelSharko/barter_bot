@@ -131,18 +131,22 @@ async def run_auto_cancel_deals(bot):
                         
                         logging.info(f"[SCHEDULER] Авто-отмена сделки {deal_id}. Разморозка {price} коинов клиенту {client_id}")
                         
-                        client_data = users.get(client_id)
+                        # В load_all_users ключи - это int. Подстрахуемся и проверим оба варианта.
+                        client_data = users.get(client_id) or users.get(int(client_id) if client_id.isdigit() else client_id)
                         if client_data:
                             # Возвращаем заблокированные средства на баланс
                             block_bal = float(client_data.get(UserMetrics.BLOCK_BALANCE.value, 0))
                             normal_bal = float(client_data.get(UserMetrics.BALANCE.value, 0))
                             
                             # Защита от отрицательного баланса (на всякий случай)
-                            unblock_amount = min(price, block_bal) if block_bal > 0 else price
+                            required_amount = round(price * 1.1, 2)
+                            unblock_amount = min(required_amount, block_bal) if block_bal > 0 else required_amount
                             
                             client_data[UserMetrics.BLOCK_BALANCE.value] = round(max(0.0, block_bal - unblock_amount), 2)
-                            client_data[UserMetrics.BALANCE.value] = round(normal_bal + price, 2)
+                            # Основной баланс не трогаем, так как при старте сделки он не уменьшался
                             users_changed = True
+                        else:
+                            logging.error(f"[SCHEDULER] КРИТИЧЕСКАЯ ОШИБКА: Клиент {client_id} не найден в базе при отмене сделки {deal_id}!")
 
                         deal[DealFields.STATUS_DEAL.value] = DealStatus.CANCELLED.value
                         deal[DealFields.DATA_CANCELLED_AT.value] = now.isoformat()

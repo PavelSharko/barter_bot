@@ -10,6 +10,7 @@ from services.keyboards.bot_all_buttons import ModeratorChatButtons
 from services.keyboards.creator_persistent_keyboards import get_cancel_keyboard, get_persistent_moderator_menu
 from services.state_bot.global_store import add_message, global_msg_fast
 from handlers.fsm_utils import set_waiting_input, check_cancel_input, clear_waiting_input
+from services.users_utils.transactions_history_manager import add_transaction_log
 
 async def start_send_coins_input(call: CallbackQuery, bot: Bot, state: FSMContext):
     """
@@ -158,6 +159,14 @@ async def process_send_coins_input(message: Message, state: FSMContext, bot: Bot
     
     save_all_users()
 
+    # Записываем в отдельный лог транзакций
+    add_transaction_log(
+        sender_id=moderator_id, 
+        receiver_id=final_key, 
+        amount=amount, 
+        description="Перевод монет от модератора"
+    )
+
     # Notify Moderator
     success_msg = await message.answer(
         f"✅ Перевод выполнен!\n"
@@ -166,8 +175,20 @@ async def process_send_coins_input(message: Message, state: FSMContext, bot: Bot
         f"Ваш новый баланс: **{users[moderator_id][UserMetrics.BALANCE.value]}**",
         parse_mode="Markdown", reply_markup=get_persistent_moderator_menu()
     )
-    add_message(global_msg_fast, user_id, success_msg)
-    add_message(global_msg_fast, user_id, message)
+    add_message(global_msg_fast, user_id, message) # Только удаляем исходное сообщение с суммой, алерт оставляем
+
+    # Notify Developer
+    try:
+        await bot.send_message(
+            chat_id=config.DEVELOPER_CHAT_ID,
+            text=f"💸 **ВНИМАНИЕ: ПЕРЕВОД ОТ МОДЕРАТОРА**\n"
+                 f"Модератор (ID: {moderator_id}) перевел **{amount}** 🪙 пользователю `{identifier}` (ID: {target_user_id}).\n"
+                 f"Новый баланс модератора: {users[moderator_id][UserMetrics.BALANCE.value]}",
+            parse_mode="Markdown"
+        )
+    except Exception as e:
+        import logging
+        logging.error(f"Failed to send transfer alert to developer: {e}")
 
     # Notify User
     try:
