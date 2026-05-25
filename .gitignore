@@ -22,3 +22,7 @@ __pycache__/
 
 # Temporary files
 test_prof.json
+текщая_версия_прод_базы/
+.DS_Store
+docs/report_coins_barter_bot.md
+DB_storge_for_test/
