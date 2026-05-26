@@ -86,6 +86,8 @@ async def process_rollback_deal_input(message: Message, state: FSMContext, bot: 
     provider_earnings = round(price_in_coins, 2)
     server_commission = round(price_in_coins * 0.1, 2)
 
+    is_finished = (status == DealStatus.FINISHED.value)
+
     lock = FileLock(f"{config.ALL_USERS_PATH}.lock")
     with lock:
         users = load_all_users()
@@ -100,33 +102,44 @@ async def process_rollback_deal_input(message: Message, state: FSMContext, bot: 
             add_message(global_msg_fast, user_id, message)
             return
 
-        provider_balance = float(provider_data.get(UserMetrics.BALANCE.value, 0))
-        
-        # Проверяем, хватает ли у провайдера монет на возврат
-        if provider_balance < provider_earnings:
-            msg = await message.answer(
-                f"❌ Откат невозможен — исполнитель (ID: {provider_id}) уже потратил полученные монеты. Баланса для возврата недостаточно.\n"
-                f"Его баланс: {provider_balance}, нужно для возврата {provider_earnings}."
-            )
-            add_message(global_msg_fast, user_id, msg)
-            add_message(global_msg_fast, user_id, message)
-            return
-
-        # 1. Снимаем у исполнителя
-        provider_data[UserMetrics.BALANCE.value] = round(provider_balance - provider_earnings, 2)
-        
-        # 2. Возвращаем клиенту полную сумму (с учетом комиссии)
-        client_balance = float(client_data.get(UserMetrics.BALANCE.value, 0))
-        client_data[UserMetrics.BALANCE.value] = round(client_balance + total_cost, 2)
-        
-        # 3. Списываем комиссию у модератора
         mod_warning = ""
-        if mod_data:
-            mod_balance = float(mod_data.get(UserMetrics.BALANCE.value, 0))
-            new_mod_balance = round(mod_balance - server_commission, 2)
-            mod_data[UserMetrics.BALANCE.value] = new_mod_balance
-            if new_mod_balance < 0:
-                mod_warning = f"\n⚠️ **Внимание!** Баланс аккаунта модератора (ID: {config.MODERATOR_CONTACT_ID}) ушел в минус: {new_mod_balance} 🪙"
+
+        if is_finished:
+            provider_balance = float(provider_data.get(UserMetrics.BALANCE.value, 0))
+            
+            # Проверяем, хватает ли у провайдера монет на возврат
+            if provider_balance < provider_earnings:
+                msg = await message.answer(
+                    f"❌ Откат невозможен — исполнитель (ID: {provider_id}) уже потратил полученные монеты. Баланса для возврата недостаточно.\n"
+                    f"Его баланс: {provider_balance}, нужно для возврата {provider_earnings}."
+                )
+                add_message(global_msg_fast, user_id, msg)
+                add_message(global_msg_fast, user_id, message)
+                return
+
+            # 1. Снимаем у исполнителя
+            provider_data[UserMetrics.BALANCE.value] = round(provider_balance - provider_earnings, 2)
+            
+            # 2. Возвращаем клиенту полную сумму (с учетом комиссии)
+            client_balance = float(client_data.get(UserMetrics.BALANCE.value, 0))
+            client_data[UserMetrics.BALANCE.value] = round(client_balance + total_cost, 2)
+            
+            # 3. Списываем комиссию у модератора
+            if mod_data:
+                mod_balance = float(mod_data.get(UserMetrics.BALANCE.value, 0))
+                new_mod_balance = round(mod_balance - server_commission, 2)
+                mod_data[UserMetrics.BALANCE.value] = new_mod_balance
+                if new_mod_balance < 0:
+                    mod_warning = f"\n⚠️ **Внимание!** Баланс аккаунта модератора (ID: {config.MODERATOR_CONTACT_ID}) ушел в минус: {new_mod_balance} 🪙"
+        else:
+            # Сделка еще в процессе (in_progress или pending_confirmation)
+            # 1. У исполнителя ничего не списываем (он ничего не получал)
+            # 2. Размораживаем монеты клиенту в block_balance (реальный баланс не менялся)
+            client_block = float(client_data.get(UserMetrics.BLOCK_BALANCE.value, 0))
+            new_block = max(0.0, client_block - total_cost)
+            client_data[UserMetrics.BLOCK_BALANCE.value] = round(new_block, 2)
+
+            # 3. У модератора комиссия еще не списывалась, так что ничего не меняем
 
         ALL_USERS_LIST.clear()
         ALL_USERS_LIST.update(users)
@@ -150,17 +163,27 @@ async def process_rollback_deal_input(message: Message, state: FSMContext, bot: 
         save_reviews_locked(reviews_db)
 
     # Уведомляем
+    if is_finished:
+        msg_text = (
+            f"✅ Сделка `{deal_id}` успешно отменена (ОТКАТ ЗАВЕРШЕННОЙ СДЕЛКИ).\n"
+            "Деньги списаны с исполнителя и возвращены клиенту на основной баланс, отзыв удалён.\n"
+            f"- Заказчику возвращено на баланс: {total_cost} 🪙\n"
+            f"- У исполнителя списано с баланса: {provider_earnings} 🪙\n"
+            f"- Списана комиссия модератора: {server_commission} 🪙\n"
+            f"- Удалено отзывов: {len(keys_to_delete)}"
+            f"{mod_warning}"
+        )
+    else:
+        msg_text = (
+            f"✅ Активная сделка `{deal_id}` успешно отменена модератором.\n"
+            f"Заблокированные монеты клиента разморожены в block_balance.\n"
+            f"- Заказчику разблокировано: {total_cost} 🪙 в block_balance\n"
+            f"- Исполнитель и модератор не задействованы (сделка не была завершена)."
+        )
+
     success_msg = await message.answer(
-        f"✅ Сделка `{deal_id}` успешно отменена.\n"
-        "Деньги возвращены клиенту, отзыв удалён.\n"
-        f"- Заказчику возвращено: {total_cost} 🪙\n"
-        f"- У исполнителя списано: {provider_earnings} 🪙\n"
-        f"- Списана комиссия модератора: {server_commission} 🪙\n"
-        f"- Удалено отзывов: {len(keys_to_delete)}"
-        f"{mod_warning}",
+        text=msg_text,
         parse_mode="Markdown", reply_markup=get_persistent_moderator_menu()
     )
-    # add_message(global_msg_fast, user_id, message)
-    # add_message(global_msg_fast, user_id, success_msg)
     # Очищаем форму FSM
     await clear_waiting_input(state, chat_id, user_id)
