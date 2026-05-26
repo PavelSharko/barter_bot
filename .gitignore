@@ -27,3 +27,4 @@ test_prof.json
 .DS_Store
 docs/report_coins_barter_bot.md
 DB_storge_for_test/
+DB_storge_tmp/

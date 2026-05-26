@@ -116,12 +116,17 @@ async def handle_edit_profile_callbacks(bot: Bot, call: CallbackQuery, state: FS
         new_profile = get_new_profile(user_id) or {}
         diff_text = build_diff_text(user_id)
 
-        moderator_text = (
-            f"⚠️ <b>Клиент хочет изменить профиль!</b>\n"
-            f"ID: <code>{user_id}</code>\n"
-            f"Username: @{html.escape(str(call.from_user.username or ''))}\n\n"
-            f"<b>Изменённые поля:</b>\n"
-            f"{diff_text}"
+        from services.msgs_utils.alert_formatter import format_profile_changed_alert
+        from services.users_utils.user_profile_manager import load_profiles
+        users_db = load_all_users()
+        profiles_db = load_profiles()
+        
+        moderator_text = format_profile_changed_alert(
+            user_id=user_id,
+            username=call.from_user.username,
+            diff_text=diff_text,
+            users_db=users_db,
+            profiles_db=profiles_db
         )
 
         MAX_LEN = 3500

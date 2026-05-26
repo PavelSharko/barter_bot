@@ -262,21 +262,21 @@ async def handle_deal_process_callbacks(call: CallbackQuery, bot: Bot, state: FS
 
         from services.keyboards.creator_inline_keyboards import get_leave_review_keyboard
         
-        profiles = load_profiles()
-        users = load_all_users()
-        
-        client_name = profiles.get(client_id, {}).get(UserProfileFields.NAME.value) or f"ID {client_id}"
-        provider_name = users.get(provider_id, {}).get(UserFields.NAME_TG.value) or f"ID {provider_id}"
-        if provider_name != f"ID {provider_id}" and not provider_name.startswith("@"):
-            provider_name = f"@{provider_name}"
-            
-        client_name = html.escape(str(client_name))
-        provider_name = html.escape(str(provider_name))
-
         # Уведомления
         provider_msg = f"Вы оказали услугу <b>{service_name}</b> - ваш баланс пополнен на <b>{provider_earnings:g}</b> 🪙\n\n<b>Плиз, оставьте звезды рейтинга и отзыв заказчику</b>"
         client_msg = f"Вы получили услугу <b>{service_name}</b> - ваш баланс уменьшен на <b>{total_cost:g}</b> 🪙\n(цена услуги: {provider_earnings:g}, сервисный сбор: {server_commission:g}) \n\n <b>Плиз, оставьте звезды рейтинга и отзыв исполнителю</b>"
-        mod_msg = f"Произошла сделка между клиентом <b>{client_name}</b> и исполнителем <b>{provider_name}</b> на услугу <b>{service_name}</b> (Сделка: <code>{deal_id}</code>).\nВаша комиссия составила <b>{server_commission:g}</b> 🪙."
+        
+        profiles = load_profiles()
+        from services.msgs_utils.alert_formatter import format_deal_completed_alert
+        mod_msg = format_deal_completed_alert(
+            deal_id=deal_id,
+            client_id=client_id,
+            provider_id=provider_id,
+            service_name=service_name,
+            server_commission=server_commission,
+            users_db=users,
+            profiles_db=profiles
+        )
 
 
 

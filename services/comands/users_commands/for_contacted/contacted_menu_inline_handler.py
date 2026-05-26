@@ -233,27 +233,25 @@ async def handle_profile_registration_callbacks(bot, call: CallbackQuery, user_i
         desc_prof = profile.get(UserProfileFields.DESCRIPTION_PROFESSION.value) or "Не указано"
         links = "\n".join(profile.get(UserProfileFields.SOCIAL_LINKS.value, [])) or "Не указано"
         
-        import html
-        moderator_text = (
-            f"🆕 <b>Новая заявка на вступление!</b>\n"
-            f"ID: <code>{user_id}</code>\n"
-            f"Username: @{html.escape(str(call.from_user.username))}\n\n"
-            f"<b>ФИО</b>: {html.escape(str(name))}\n"
-            f"<b>Район</b>: {html.escape(str(area))}\n"
-            f"<b>Деятельность</b>: {html.escape(str(profession))}\n"
-            f"<b>О себе</b>: {html.escape(str(desc_prof))}\n"
-            f"<b>Ссылки</b>: \n{html.escape(str(links))}\n\n"
-        )
+        from services.msgs_utils.alert_formatter import format_new_registration_alert
+        from services.users_utils.user_profile_manager import load_profiles
         
+        users_db = load_all_users()
+        profiles_db = load_profiles()
         services = profile.get(UserProfileFields.SERVICES.value, [])
-        if services:
-            moderator_text += "<b>Услуги:</b>\n"
-            for i, s in enumerate(services, 1):
-                moderator_text += f"{i}. <b>{html.escape(str(s.get('name', '')))}</b>\n"
-                moderator_text += f"   <i>Описание</i>: {html.escape(str(s.get('description', '')))}\n"
-                moderator_text += f"   <i>Прайс</i>: {html.escape(str(s.get('price', '')))}\n\n"
-        else:
-            moderator_text += "<b>Услуги отсутствуют.</b>\n"
+
+        moderator_text = format_new_registration_alert(
+            user_id=user_id,
+            username=call.from_user.username,
+            name=name,
+            area=area,
+            profession=profession,
+            desc_prof=desc_prof,
+            links=links,
+            services_list=services,
+            users_db=users_db,
+            profiles_db=profiles_db
+        )
 
         MAX_LEN = 3500
         parts = []

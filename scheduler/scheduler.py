@@ -121,6 +121,8 @@ async def run_auto_cancel_deals(bot):
                 lock_users = FileLock(f"{config.ALL_USERS_PATH}.lock")
                 with lock_users:
                     users = load_all_users()
+                    from services.users_utils.user_profile_manager import load_profiles
+                    profiles = load_profiles()
                     users_changed = False
                     
                     for deal_id in deals_to_cancel:
@@ -128,6 +130,7 @@ async def run_auto_cancel_deals(bot):
                         client_id = str(deal.get(DealFields.SERVICE_CLIENT_ID.value))
                         provider_id = str(deal.get(DealFields.SERVICE_PROVIDER_ID.value))
                         price = float(deal.get(DealFields.PRICE_IN_COINS.value, 0))
+                        service_name = deal.get(DealFields.SERVICE_NAME.value) or "Неизвестная услуга"
                         
                         logging.info(f"[SCHEDULER] Авто-отмена сделки {deal_id}. Разморозка {price} коинов клиенту {client_id}")
                         
@@ -157,14 +160,25 @@ async def run_auto_cancel_deals(bot):
                         
                         text_client = f"⚠️ Ваша сделка `{deal_id}` автоматически отменена.\nПричина: {reason}\nВаши {price} 🪙 разблокированы."
                         text_provider = f"⚠️ Ваша потенциальная сделка `{deal_id}` отменена из-за отсутствия ответа более суток."
-                        text_mod = f"🛑 Авто-отмена сделки `{deal_id}`.\nКлиент: {client_id}\nИсполнитель: {provider_id}\nПричина: {reason}"
+                        
+                        from services.msgs_utils.alert_formatter import format_deal_auto_cancelled_alert
+                        text_mod = format_deal_auto_cancelled_alert(
+                            deal_id=deal_id,
+                            client_id=client_id,
+                            provider_id=provider_id,
+                            service_name=service_name,
+                            price=price,
+                            reason=reason,
+                            users_db=users,
+                            profiles_db=profiles
+                        )
                         
                         if client_id:
                             await safe_send_message(bot, chat_id=client_id, text=text_client, parse_mode="Markdown")
                         if provider_id:
                             await safe_send_message(bot, chat_id=provider_id, text=text_provider, parse_mode="Markdown")
                         
-                        await safe_send_message(bot, chat_id=config.MODERATOR_CONTACT_ID, text=text_mod, parse_mode="Markdown")
+                        await safe_send_message(bot, chat_id=config.MODERATOR_CONTACT_ID, text=text_mod, parse_mode="HTML")
 
                     if users_changed:
                         ALL_USERS_LIST.clear()

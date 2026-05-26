@@ -548,9 +548,20 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
                         pass
                         
                     try:
+                        from services.msgs_utils.alert_formatter import format_deal_blocked_alert
+                        users_db = load_all_users()
+                        profiles_db = load_profiles()
+                        moderator_text = format_deal_blocked_alert(
+                            client_id=user_id,
+                            provider_id=provider_id,
+                            users_db=users_db,
+                            profiles_db=profiles_db
+                        )
+
                         await bot.send_message(
                             chat_id=config.MODERATOR_CONTACT_ID, 
-                            text="кто-то пытался сделать сделку но акета еще на проверке у модератора и поэтому получил отказ - проверьте заявки на правки анкет"
+                            text=moderator_text,
+                            parse_mode="HTML"
                         )
                     except Exception:
                         pass
@@ -682,13 +693,17 @@ async def handle_callback_main_menu_for_users(call: CallbackQuery, bot: Bot, sta
             
         # Уведомляем модератора
         try:
-            moderator_text = (
-                f"⚠️ <b>Создана новая сделка</b> ⚠️\n"
-                f"ID Сделки: <code>{deal_id}</code>\n"
-                f"Клиент: <code>{user_id}</code>\n"
-                f"Исполнитель: <code>{provider_id}</code>\n"
-                f"Услуга: {html.escape(str(deal_data[DealFields.SERVICE_NAME.value]))}\n"
-                f"Сумма: {price:g} монет."
+            from services.msgs_utils.alert_formatter import format_new_deal_alert
+            users_db = load_all_users()
+            profiles_db = load_profiles()
+            moderator_text = format_new_deal_alert(
+                deal_id=deal_id,
+                client_id=user_id,
+                provider_id=provider_id,
+                service_name=deal_data[DealFields.SERVICE_NAME.value],
+                price=price,
+                users_db=users_db,
+                profiles_db=profiles_db
             )
             msg_mod = await bot.send_message(
                 chat_id=config.MODERATOR_CONTACT_ID,
